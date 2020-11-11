@@ -15,6 +15,9 @@
     "python.testing.unittestEnabled": true,
     "python.linting.enabled": true,
     "cSpell.words": [
-        "innov"
+        "PYTHONPATH",
+        "innov",
+        "venv",
+        "virtualenv"
     ]
 }
