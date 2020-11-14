@@ -1,5 +1,5 @@
-from src.genotype import ConnectionGene, Genotype, NodeGene, NodeType
-from src.phenotype import Phenotype
+from src.neat.genotype import ConnectionGene, Genotype, NodeGene, NodeType
+from src.neat.phenotype import Phenotype
 import unittest
 
 # Set up genome for AND

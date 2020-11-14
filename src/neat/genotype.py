@@ -35,8 +35,11 @@ class ConnectionGene:
 class Genotype:
     connection_genes: "list[ConnectionGene]"
     node_genes: "list[NodeGene]"
+    node_innov_start: int
+    conn_innov_start: int
 
     def __init__(self) -> None:
         self.connection_genes = []
         self.node_genes = []
-        self.next_node_id = 0
+        self.node_innov_start = 0
+        self.conn_innov_start = 0

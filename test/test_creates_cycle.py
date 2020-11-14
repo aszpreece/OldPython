@@ -1,6 +1,6 @@
-from src.genotype import ConnectionGene
 import unittest
-from src.phenotype import creates_cycle
+from src.neat.genotype import ConnectionGene
+from src.neat.phenotype import creates_cycle
 
 
 class TestCreatesCycle(unittest.TestCase):

@@ -15,8 +15,11 @@
     "python.testing.unittestEnabled": true,
     "python.linting.enabled": true,
     "cSpell.words": [
+        "Hyperparams",
         "PYTHONPATH",
+        "etnetwork",
         "innov",
+        "mutators",
         "venv",
         "virtualenv"
     ],

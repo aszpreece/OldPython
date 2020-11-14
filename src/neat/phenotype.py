@@ -1,6 +1,6 @@
 from typing import Deque, List, Set, Tuple
 from collections import deque
-from src.genotype import ConnectionGene, Genotype, NodeType
+from src.neat.genotype import ConnectionGene, Genotype, NodeType
 
 
 def relu(x: float) -> float:
@@ -148,7 +148,7 @@ class Phenotype:
         recurrent_node_activations = dict()
         # Save the activations for the recurrent connections from the previous execution
         for id in self.recurrent_nodes:
-            recurrent_node_activations[id] = self.node_activations.get(id,0)
+            recurrent_node_activations[id] = self.node_activations.get(id, 0)
 
         # Initialize the input nodes with the given activations
         for key, activation in inputs.items():

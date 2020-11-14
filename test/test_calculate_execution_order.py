@@ -1,6 +1,6 @@
 from typing import Tuple
 import unittest
-from src.phenotype import calculate_execution_order
+from src.neat.phenotype import calculate_execution_order
 
 
 class TestCalculateExecutionOrder(unittest.TestCase):
