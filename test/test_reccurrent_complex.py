@@ -11,33 +11,33 @@ class TestComplexRecurrent(unittest.TestCase):
 
         self.node_genes = [
             # Input genes
-            NodeGene(NodeType.INPUT, 0.1, id=0),
-            NodeGene(NodeType.INPUT, 0.1, id=1),
-            NodeGene(NodeType.INPUT, 0.1, id=2),
+            NodeGene(0, NodeType.INPUT),
+            NodeGene(1, NodeType.INPUT),
+            NodeGene(2, NodeType.INPUT),
 
             # Hidden genes
-            NodeGene(NodeType.HIDDEN, 0.5, bias=0, id=3),
-            NodeGene(NodeType.HIDDEN, 0.51, bias=0, id=4),
+            NodeGene(3, NodeType.HIDDEN),
+            NodeGene(4, NodeType.HIDDEN),
 
             # Output genes
-            NodeGene(NodeType.OUTPUT, 1, id=5)
+            NodeGene(5, NodeType.OUTPUT)
         ]
 
         self.connection_genes = [
             # Input connections
-            ConnectionGene(0, 3, 0.5, 1),
-            ConnectionGene(1, 3, 0.5, 2),
-            ConnectionGene(1, 4, 2, 3),
-            ConnectionGene(2, 4, 1.5, 3),
+            ConnectionGene(1, 0, 3, 0.5),
+            ConnectionGene(2, 1, 3, 0.5),
+            ConnectionGene(3, 1, 4, 2),
+            ConnectionGene(4, 2, 4, 1.5),
             # Hidden connection
-            ConnectionGene(3, 4, 1, 3),
+            ConnectionGene(5, 3, 4, 1),
             # The recurrent connection from 4 to 3
-            ConnectionGene(4, 3, 0.25, 3),
+            ConnectionGene(6, 4, 3, 0.25),
             # Hidden to output
-            ConnectionGene(3, 5, 1, 3),
-            ConnectionGene(4, 5, 1, 3),
+            ConnectionGene(7, 3, 5, 1),
+            ConnectionGene(8, 4, 5, 1),
             # The recurrent connection from 5 to 3
-            ConnectionGene(4, 3, -0.1, 3),
+            ConnectionGene(9, 4, 3, -0.1),
         ]
 
         self.genotype.connection_genes = self.connection_genes
@@ -45,9 +45,9 @@ class TestComplexRecurrent(unittest.TestCase):
         self.network = Phenotype(self.genotype)
 
     def test_output(self):
-        result = self.network.calculate([1, 2, 3])
+        result = self.network.calculate({0: 1, 1: 2, 2: 3})
         self.assertEqual(result[5], 11.5)
-        result = self.network.calculate([1, 2, 3])
+        result = self.network.calculate({0: 1, 1: 2, 2: 3})
         self.assertEqual(result[5], 14.5)
-        result = self.network.calculate([1, 2, 3])
+        result = self.network.calculate({0: 1, 1: 2, 2: 3})
         self.assertEqual(result[5], 14.95)
