@@ -1,6 +1,8 @@
 from typing import Callable, Dict, List, Optional, Tuple, TypeVar
-from src.neat.genotype import ConnectionGene, Genotype, NodeGene, NodeType
 from random import Random
+import logging
+
+from src.neat.genotype import ConnectionGene, Genotype, NodeGene, NodeType
 
 
 class NEAT:
@@ -91,13 +93,14 @@ class NEAT:
         # Decide on the connection to split
 
         # Fix: no longer tries to split disabled genes
-        length = len(list(filter(lambda conn: conn.enabled,
-                                 genotype.connection_genes)))
+        enabledGenes = list(filter(lambda conn: conn.enabled,
+                                   genotype.connection_genes))
+        length = len(enabledGenes)
 
         index = random.randrange(0, length)
 
         # Disable the current connection
-        originalConnection = genotype.connection_genes[index]
+        originalConnection = enabledGenes[index]
         originalConnection.enabled = False
 
         # See if this mutation has arisen in this generation and if so use the innovation ids from that mutation
@@ -145,41 +148,63 @@ class NEAT:
         random.shuffle(indexes)
 
         # Dictionaries guarantee preservation of insertion order.
-        firstList = dict((i, None) for i in indexes)
+        firstList = dict(
+            (genotype.node_genes[i].innov_id, None) for i in indexes)
 
         random.shuffle(indexes)
 
         # We cannot connect 'to' input nodes so we should ignore them
         secondList = dict(
-            (i, None) for i in indexes if genotype.node_genes[i].type != NodeType.INPUT)
+            (genotype.node_genes[i].innov_id, None) for i in indexes if genotype.node_genes[i].type != NodeType.INPUT)
 
         # The pair we have found
         pair: "Optional[Tuple[int, int]]" = None
 
+        re_enabled_flag = False
+
         for first in firstList.keys():
+
             # We need to find all the connections that originate at the first node we have selected and log their 'to' node
-            conns_from_first = set(
-                conn.to for conn in genotype.connection_genes if conn.source == genotype.node_genes[first].innov_id)
+            conns_from_first: Dict[int, ConnectionGene] = dict(
+                (conn.to, conn) for conn in genotype.connection_genes if conn.source == first)
             for second in secondList.keys():
                 # Looping through the second list, check whether or not the second node is already connected to the first node (in the same direction)
-                if not second in conns_from_first:
+                connection = conns_from_first.get(second, None)
+                # If there is no connection gene at all there won't be an entry in the hash table and it will rteurn Nome
+                if connection == None:
                     pair = (first, second)
                     break
+                # If there is a disabled connection we should re enable it TODO is this okay?
+                elif connection.enabled == False:
+                    # Flag that we have re enabled a gene
+                    re_enabled_flag = True
+                    connection.enabled = True
+                    break
+
             else:
                 # If this node is connected to everything then we cannot connect it to a new node and we must select a new 'first node
                 continue
             break
 
-        # TODO
-        # Unlikely, but we cannot do this mutation. How to handle? For now we can just do nothing
-        # But we should probably mark this event somehow with a return value.
         if pair == None:
+            # If we didn't
+            if re_enabled_flag == False:
+                # TODO
+                # Unlikely (Famous last words), but we cannot do this mutation. We should log it
+                logging.warn(
+                    'Failed to create a new connection in the genome because it is fully connected. It is possible for this to happen naturally, but may be a sign of bad configuration')
+            # If the re enabled flag was true though we can just return
             return
 
         # Get new innov_id, either by checking if this mutation has happened before in this generation, or by getting a new one
         innov_id = self.new_conn_signatures.get(pair)
-        if (innov_id == None):
+
+        if innov_id == None:
             innov_id = self.get_next_conn_innov_num()
+            self.new_conn_signatures[pair] = innov_id
+        else:
+            logging.debug(
+                'Mutation has happened before. Using old innovation number.')
 
         genotype.connection_genes.append(
             ConnectionGene(innov_id, pair[0], pair[1], 1.0))

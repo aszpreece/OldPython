@@ -23,13 +23,14 @@ class ConnectionGene:
     to: int
     weight: float
     innov_id: int
+    enabled: bool
 
-    def __init__(self, innov_id: int, source: int, to: int, weight: float) -> None:
+    def __init__(self, innov_id: int, source: int, to: int, weight: float, enabled=True) -> None:
         self.source = source
         self.to = to
         self.weight = weight
         self.innov_id = innov_id
-        self.enabled = True
+        self.enabled = enabled
 
 
 class Genotype:
