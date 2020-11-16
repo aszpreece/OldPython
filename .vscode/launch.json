@@ -5,12 +5,16 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: Run Test",
+            "name": "XOR Test",
             "type": "python",
             "request": "launch",
-            "program": "src/test.py",
-            "console": "integratedTerminal",
-            "pythonPath": "/Library/Frameworks/Python.framework/Versions/3.8/bin/python3"
+            "module": "test.xor_harness"
+        },
+        {
+            "name": "Test UI",
+            "type": "python",
+            "request": "launch",
+            "module": "test.foo"
         }
     ]
 }

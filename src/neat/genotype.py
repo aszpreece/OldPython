@@ -44,3 +44,12 @@ class Genotype:
         self.node_genes = []
         self.node_innov_start = 0
         self.conn_innov_start = 0
+
+    def get_enabled_connections_count(self):
+        def enabled_genes_filter(gene: ConnectionGene) -> bool:
+            return gene.enabled
+
+        return len(list(filter(enabled_genes_filter, self.connection_genes)))
+
+    def get_complexity(self):
+        return (len(self.node_genes), len(self.connection_genes), self.get_enabled_connections_count())

@@ -19,6 +19,8 @@
         "PYTHONPATH",
         "etnetwork",
         "innov",
+        "ione",
+        "itwo",
         "mutators",
         "venv",
         "virtualenv"

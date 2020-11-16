@@ -17,7 +17,7 @@ class TestMutate(unittest.TestCase):
         ]
 
         # Doesn't matter this arg shouldn't be used yet
-        neat = NEAT(genome)
+        neat = NEAT(genome, 100, lambda x: 1)
         neat.prob_perturbing_weights = 0.1
         neat.weight_perturb_scale = 1.0
         neat.new_weight_variance = 1.5
@@ -55,7 +55,7 @@ class TestMutate(unittest.TestCase):
         genome.conn_innov_start = 3
 
         # Doesn't matter this arg shouldn't be used yet
-        neat = NEAT(genome)
+        neat = NEAT(genome, 100, lambda x: 1)
 
         # Seed so we get same results
         random = Random(1001)
@@ -112,7 +112,7 @@ class TestMutate(unittest.TestCase):
         genome1.node_innov_start = 10
 
         # Doesn't matter this arg shouldn't be used yet
-        neat = NEAT(genome1)
+        neat = NEAT(genome1, 100, lambda x: 1)
 
         # Seed so we get same results
         random = Random(1001)
@@ -161,7 +161,7 @@ class TestMutate(unittest.TestCase):
         genome.conn_innov_start = 10
 
         # Doesn't matter this arg shouldn't be used yet
-        neat = NEAT(genome)
+        neat = NEAT(genome, 100, lambda x: 1)
         random = Random(1001)
 
         # This shouldn't be able to do anything
@@ -186,7 +186,7 @@ class TestMutate(unittest.TestCase):
         genome.conn_innov_start = 10
 
         # Doesn't matter this arg shouldn't be used yet
-        neat = NEAT(genome)
+        neat = NEAT(genome, 100, lambda x: 1)
         random = Random(123)
 
         # This shouldn't be able to do anything because the network is fully connected
@@ -209,7 +209,7 @@ class TestMutate(unittest.TestCase):
         genome1.node_genes = node_genes.copy()
 
         # Doesn't matter this arg shouldn't be used yet
-        neat = NEAT(genome1)
+        neat = NEAT(genome1, 100, lambda x: 1)
         random = Random(1001)
 
         # This should be able to make a connection between
@@ -248,7 +248,7 @@ class TestMutate(unittest.TestCase):
         genome.conn_innov_start = 10
 
         # Doesn't matter this arg shouldn't be used yet
-        neat = NEAT(genome)
+        neat = NEAT(genome, 100, lambda x: 1)
         random = Random(123)
 
         # The only thing this can do is re-enable the disabled connection between 20 and 20

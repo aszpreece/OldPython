@@ -1,4 +1,4 @@
-from typing import Deque, List, Set, Tuple
+from typing import Deque, Dict, List, Set, Tuple
 from collections import deque
 from src.neat.genotype import ConnectionGene, Genotype, NodeType
 
@@ -145,10 +145,12 @@ class Phenotype:
 
     def calculate(self, inputs: "dict[int, float]"):
 
-        recurrent_node_activations = dict()
-        # Save the activations for the recurrent connections from the previous execution
+        recurrent_node_activations: Dict[int, float] = dict()
+        # Save the activations for the recurrent connections from the previous execution (unless we have disabled recursion)
+
         for id in self.recurrent_nodes:
-            recurrent_node_activations[id] = self.node_activations.get(id, 0)
+            recurrent_node_activations[id] = self.node_activations.get(
+                id, 0)
 
         # Initialize the input nodes with the given activations
         for key, activation in inputs.items():
@@ -160,12 +162,34 @@ class Phenotype:
                 source, weight, innov_id = connection
                 # If the connection has been marked as a recurrent connection fetch the val from the previous execution
                 if innov_id in self.recurrent_connections:
-                    total += recurrent_node_activations.get(source, 0) * weight
+                    total += recurrent_node_activations.get(
+                        source, 0) * weight
                 # Else we can get it from our current array
                 else:
                     total += self.node_activations[source] * weight
 
             self.node_inputs[node] = total
+
+            self.node_activations[node] = relu(total)
+
+        return dict([
+            (output_node, self.node_activations[output_node]) for output_node in self.output_nodes
+        ])
+
+    def calculate_no_rec(self, inputs: "dict[int, float]"):
+
+        # Initialize the input nodes with the given activations
+        for key, activation in inputs.items():
+            self.node_activations[key] = activation
+
+        for node in self.nodes:
+            total = self.biases[node]
+            for connection in self.connections.get(node, []):
+                source, weight, innov_id = connection
+                total += self.node_activations.get(source, 0) * weight
+
+            self.node_inputs[node] = total
+
             self.node_activations[node] = relu(total)
 
         return dict([
