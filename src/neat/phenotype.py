@@ -85,7 +85,6 @@ class Phenotype:
     node_inputs: "dict[int, float]"
     node_activations: "dict[int, float]"
     connections: "dict[int, list[Tuple[int, float, int]]]"
-    biases: "dict[int, float]"
     recurrent_connections: Set[int]
     recurrent_nodes: Set[int]
 
@@ -117,9 +116,6 @@ class Phenotype:
         # List of output nodes
         self.output_nodes = [
             node_gene.innov_id for node_gene in genome.node_genes if node_gene.type == NodeType.OUTPUT]
-
-        self.biases = dict([(node_gene.innov_id, node_gene.bias)
-                            for node_gene in genome.node_genes])
 
         # Calculate an execution plan for the neural network.
         # We need to figure out *an* order we can calculate the nodes in.
@@ -157,7 +153,7 @@ class Phenotype:
             self.node_activations[key] = activation
 
         for node in self.nodes:
-            total = self.biases[node]
+            total = 0
             for connection in self.connections.get(node, []):
                 source, weight, innov_id = connection
                 # If the connection has been marked as a recurrent connection fetch the val from the previous execution
@@ -183,7 +179,7 @@ class Phenotype:
             self.node_activations[key] = activation
 
         for node in self.nodes:
-            total = self.biases[node]
+            total = 0
             for connection in self.connections.get(node, []):
                 source, weight, innov_id = connection
                 total += self.node_activations.get(source, 0) * weight

@@ -10,11 +10,9 @@ class NodeType(Enum):
 class NodeGene:
     innov_id: int
     type: NodeType
-    bias: float
 
-    def __init__(self, innov_id: int, type: NodeType, bias: float = 0.0) -> None:
+    def __init__(self, innov_id: int, type: NodeType) -> None:
         self.type = type
-        self.bias = bias
         self.innov_id = innov_id
 
 

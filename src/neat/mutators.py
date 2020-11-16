@@ -1,3 +1,4 @@
+from numpy.testing._private.utils import assert_equal
 from src.neat.phenotype import Phenotype
 from typing import Callable, Dict, List, Optional, Tuple
 from random import Random
@@ -38,6 +39,10 @@ class NEAT:
 
     generation_size: int
 
+    sim_disjoint_weight: float
+    sim_excess_weight: float
+    sim_weight_diff_weight: float
+
     def __init__(self, base_genotype: Genotype, generation_size: int,  fitness_function: Callable[[Genotype], float],
                  neat_random=Random()) -> None:
 
@@ -75,6 +80,10 @@ class NEAT:
         self.fitness_function = fitness_function
         self.fitness_scores = PriorityQueue(generation_size)
 
+        self.sim_disjoint_weight = 1.0
+        self.sim_excess_weight = 1.0
+        self.sim_weight_diff_weight = 1.0
+
     def get_next_node_innov_num(self):
         self.node_innovation_number += 1
         return self.node_innovation_number
@@ -87,13 +96,10 @@ class NEAT:
         """Mutate the given genotype
         """
         if self.neat_random.uniform(0, 1) <= self.prob_to_mutate_weights:
-            logging.info('Mutating weights')
             self.weight_mutate(genotype, self.neat_random)
         if self.neat_random.uniform(0, 1) <= self.prob_to_split_connection:
-            logging.info('Splitting connection')
             self.split_connection_mutate(genotype, self.neat_random)
         if self.neat_random.uniform(0, 1) <= self.prob_to_connect_nodes:
-            logging.info('Connecting unconnected nodes')
             self.add_connection_mutate(genotype, self.neat_random)
 
     def run_generation(self) -> Optional[Tuple[float, int]]:
@@ -135,8 +141,8 @@ class NEAT:
                     self.mutate(genome_copy)
                     new_population.append(genome_copy)
 
-            del(self.population)
             self.population = new_population
+            assert_equal(len(self.population), self.generation_size)
 
         else:
             self.first_run = False
@@ -181,18 +187,6 @@ class NEAT:
                 # Assign a new random from a normal distribution
                 connection_gene.weight = random.normalvariate(
                     0, self.new_weight_variance)
-
-        for node_gene in genotype.node_genes:
-
-            if node_gene.type != NodeType.INPUT:
-                if random.uniform(0, 1) < self.prob_perturbing_weights:
-                    # Perturb the weights
-                    node_gene.bias += (random.random() * 2.0 - 1.0) * \
-                        self.weight_perturb_scale
-                else:
-                    # Assign a new random from a normal distribution
-                    node_gene.bias = random.normalvariate(
-                        0, self.new_weight_variance)
 
     def split_connection_mutate(self, genotype: Genotype, random: Random) -> None:
         """Given a genotype, split a random connection and add an intermediate node.
@@ -239,7 +233,7 @@ class NEAT:
 
         # Create a new node with a the innovation number
         genotype.node_genes.append(NodeGene(node_innov_id,
-                                            NodeType.HIDDEN, bias=0))
+                                            NodeType.HIDDEN))
 
         # New connection from old source to new node with weight of 1.0 to reduce impact
         genotype.connection_genes.append(ConnectionGene(
@@ -324,3 +318,83 @@ class NEAT:
 
         genotype.connection_genes.append(
             ConnectionGene(innov_id, pair[0], pair[1], 1.0))
+
+    def similarity_operator(self, gen1: Genotype, gen2: Genotype) -> float:
+        """Takes two genotypes and calculates their similarity
+
+        Args:
+            gen1 (Genotype): first genotype.
+            gen2 (Genotype): second genotype.
+
+        Returns:
+            float: similarity score based on the hyper params TODO
+        """
+
+        def compare_gene_list(genes1: List, genes2: List, weight_genes=False):
+            # Calculate number of similar genes
+
+            gen1_genes_count = len(gen1.connection_genes)
+            gen2_genes_count = len(gen2.connection_genes)
+
+            gen1_index = 0
+            gen2_index = 0
+
+            disjoint_genes = 0
+
+            weight_diff_count = 0
+
+            while(gen1_index < gen1_genes_count and gen2_index < gen2_genes_count):
+                gene1 = genes1[gen1_index]
+                gene2 = genes2[gen2_index]
+
+                if gene1.innov_id == gene2.innov_id:
+                    # genes match, progress both pointers
+                    gen1_index += 1
+                    gen2_index += 1
+                    if weight_genes:
+                        weight_diff_count += abs(gene1.weight - gene2.weight)
+                    continue
+                elif gene1.innov_id > gene2.innov_id:
+                    # If the conn1 (top genome) has a larger innovation number
+                    # Progress conn2s counter
+                    gen2_index += 1
+                    disjoint_genes += 1
+
+                    continue
+                # This will always happen
+                else:  # conn1.innov_id < conn2.innov_id
+                    # If the conn2 (bottom genome) has a larger innovation number
+                    # progress conn1s counter
+                    gen1_index += 1
+                    disjoint_genes += 1
+                    continue
+
+            # Once we've got here we know some of the genes don't match
+            excess_genes = (gen1_genes_count - gen1_index) + \
+                (gen2_genes_count - gen2_index)
+
+            longest_genome = max(gen1_genes_count, gen2_genes_count)
+
+            # Don't bother to normalize small genomes
+            if longest_genome <= 20:
+                longest_genome = 1
+
+            average_weight_diff = weight_diff_count / longest_genome
+
+            return (disjoint_genes, excess_genes, average_weight_diff)
+
+        disjoint_conns, excess_cons, conn_weight_diff = compare_gene_list(
+            gen1.connection_genes, gen2.connection_genes, weight_genes=True)
+        disjoint_nodes, excess_nodes, bias_weight_diff = compare_gene_list(
+            gen1.node_genes, gen2.node_genes)
+
+        disjoint_total = (disjoint_conns + disjoint_nodes) / \
+            2 * self.sim_disjoint_weight
+
+        excess_total = (excess_nodes + excess_cons) / \
+            2 * self.sim_excess_weight
+
+        weight_total = (conn_weight_diff + bias_weight_diff) / \
+            2 * self.sim_weight_diff_weight
+
+        return disjoint_total + excess_total + weight_total

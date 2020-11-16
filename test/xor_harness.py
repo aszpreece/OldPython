@@ -1,4 +1,5 @@
 
+import random
 import math
 from typing import List, Tuple
 
@@ -14,7 +15,7 @@ import logging
 from typing import List, Tuple
 
 
-logging.basicConfig(level=logging.WARNING)
+logging.basicConfig(level=logging.NOTSET)
 
 
 def train_xor():
@@ -86,14 +87,13 @@ def train_sin():
         xs = []
         results = []
         expected = []
-        for x in np.linspace(-2 * math.pi, 2 * math.pi, 12):
+        for x in np.linspace(-2 * math.pi, 2 * math.pi, 100):
             xs.append(x)
             result = phenotype.calculate_no_rec({
                 1: radian_to_scalar(x)  # Normalize input
             })[2]
             expected.append(math.sin(x))
             results.append(scalar_to_output(result))
-        axis.plot()
         axis.clear()
         axis.set(title="Results",
                  xlabel='x (Radians)', ylabel='y')
@@ -106,7 +106,12 @@ def train_sin():
         score: float = 0
 
         test_cases: List[Tuple[float, float]] = [
-            (input, math.sin(input)) for input in np.linspace(-2 * math.pi, 2 * math.pi, 12)]
+            (input, math.sin(input)) for input in np.linspace(-2 * math.pi, 2 * math.pi, 50)]
+
+        # test_cases: List[Tuple[float, float]] = []
+        for i in range(12):
+            r = (random.random() * math.pi * 2)
+            test_cases.append((r, math.sin(r)))
 
         phenotype = Phenotype(genotype)
         for ione, expected in test_cases:
@@ -125,9 +130,9 @@ def train_sin():
 def train_neat(base_genotype: Genotype, fitness_func, result_func=lambda genotype, figure: None):
 
     neat = NEAT(base_genotype, 100, fitness_func)
-    neat.percentage_top_networks_passed_on = 0.1
-    neat.prob_to_split_connection = 0.2
-    neat.prob_to_connect_nodes = 0.1
+    # neat.percentage_top_networks_passed_on = 0.1
+    # neat.prob_to_split_connection = 0.2
+    # neat.prob_to_connect_nodes = 0.1
 
     plt.ion()
 
