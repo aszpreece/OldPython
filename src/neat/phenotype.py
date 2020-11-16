@@ -105,13 +105,13 @@ class Phenotype:
         # Dict of node input values indexed by node id
         self.node_inputs = {}
 
-        # Array of the input nodes
+        # Array of the input/bias nodes
         self.input_nodes = [
-            node_gene.innov_id for node_gene in genome.node_genes if node_gene.type == NodeType.INPUT]
+            node_gene.innov_id for node_gene in genome.node_genes if node_gene.type == NodeType.INPUT or node_gene.type == NodeType.BIAS]
 
-        # List of non input nodes
+        # List of non input/bias nodes
         self.nodes = [
-            node_gene.innov_id for node_gene in genome.node_genes if node_gene.type != NodeType.INPUT]
+            node_gene.innov_id for node_gene in genome.node_genes if node_gene.type != NodeType.INPUT and node_gene.type != NodeType.BIAS]
 
         # List of output nodes
         self.output_nodes = [

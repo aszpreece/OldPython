@@ -161,7 +161,7 @@ class NEAT:
             self.fitness_scores.put(
                 (score, index))
 
-            if highest_performer == None or score < highest_performer[1]:
+            if highest_performer == None or score < highest_performer[0]:
                 highest_performer = (score, index)
 
         return highest_performer
@@ -223,6 +223,9 @@ class NEAT:
 
         if not innovation_ids_tuple == None:
             node_innov_id, from_innov_id, to_innov_id = innovation_ids_tuple
+            logging.debug(
+                'Split node has happened before this generation. Using old innovation numbers.')
+
         else:
             node_innov_id = self.get_next_node_innov_num()
             from_innov_id = self.get_next_conn_innov_num()
@@ -263,9 +266,9 @@ class NEAT:
 
         random.shuffle(indexes)
 
-        # We cannot connect 'to' input nodes so we should ignore them
+        # We cannot connect 'to' input or bias nodes so we should ignore them
         secondList = dict(
-            (genotype.node_genes[i].innov_id, None) for i in indexes if genotype.node_genes[i].type != NodeType.INPUT)
+            (genotype.node_genes[i].innov_id, None) for i in indexes if genotype.node_genes[i].type != NodeType.INPUT and genotype.node_genes[i].type != NodeType.BIAS)
 
         # The pair we have found
         pair: "Optional[Tuple[int, int]]" = None
@@ -314,7 +317,7 @@ class NEAT:
             self.new_conn_signatures[pair] = innov_id
         else:
             logging.debug(
-                'Mutation has happened before. Using old innovation number.')
+                'Connection mutation has happened before this generation. Using old innovation number.')
 
         genotype.connection_genes.append(
             ConnectionGene(innov_id, pair[0], pair[1], 1.0))

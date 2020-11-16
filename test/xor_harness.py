@@ -23,6 +23,7 @@ def train_xor():
     base_genotype = Genotype()
 
     base_genotype.node_genes = [
+        NodeGene(0, NodeType.BIAS),
         NodeGene(1, NodeType.INPUT),
         NodeGene(2, NodeType.INPUT),
         NodeGene(3, NodeType.OUTPUT)
@@ -49,7 +50,7 @@ def train_xor():
         phenotype = Phenotype(genotype)
         for ione, itwo, expected in test_cases:
             result = phenotype.calculate_no_rec({
-                1: ione, 2: itwo
+                0: 1, 1: ione, 2: itwo
             })
 
             # Mean square error
@@ -64,6 +65,7 @@ def train_sin():
     base_genotype = Genotype()
 
     base_genotype.node_genes = [
+        NodeGene(0, NodeType.BIAS),
         NodeGene(1, NodeType.INPUT),
         NodeGene(2, NodeType.OUTPUT)
     ]
@@ -90,7 +92,7 @@ def train_sin():
         for x in np.linspace(-2 * math.pi, 2 * math.pi, 100):
             xs.append(x)
             result = phenotype.calculate_no_rec({
-                1: radian_to_scalar(x)  # Normalize input
+                0: 1, 1: radian_to_scalar(x)  # Normalize input
             })[2]
             expected.append(math.sin(x))
             results.append(scalar_to_output(result))
@@ -116,7 +118,7 @@ def train_sin():
         phenotype = Phenotype(genotype)
         for ione, expected in test_cases:
             result = phenotype.calculate_no_rec({
-                1: radian_to_scalar(ione)
+                0: 1, 1: radian_to_scalar(ione)
             })[2]
 
             # Mean square error
@@ -130,9 +132,9 @@ def train_sin():
 def train_neat(base_genotype: Genotype, fitness_func, result_func=lambda genotype, figure: None):
 
     neat = NEAT(base_genotype, 100, fitness_func)
-    # neat.percentage_top_networks_passed_on = 0.1
-    # neat.prob_to_split_connection = 0.2
-    # neat.prob_to_connect_nodes = 0.1
+    neat.percentage_top_networks_passed_on = 0.1
+    neat.prob_to_split_connection = 0.2
+    neat.prob_to_connect_nodes = 0.1
 
     plt.ion()
 
@@ -154,7 +156,6 @@ def train_neat(base_genotype: Genotype, fitness_func, result_func=lambda genotyp
             if old_score != score:
                 print(f'Score for generation {generation} is {score}')
 
-            # Why the hell is this always 0? TODO
             solution = neat.population[index]
             old_score = score
 
