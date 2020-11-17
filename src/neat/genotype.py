@@ -33,16 +33,22 @@ class ConnectionGene:
 
 
 class Genotype:
+
     connection_genes: "list[ConnectionGene]"
     node_genes: "list[NodeGene]"
     node_innov_start: int
     conn_innov_start: int
+
+    species_id: int
+    fitness: float
 
     def __init__(self) -> None:
         self.connection_genes = []
         self.node_genes = []
         self.node_innov_start = 0
         self.conn_innov_start = 0
+        self.species_id = -1
+        self.fitness = 0
 
     def get_enabled_connections_count(self):
         def enabled_genes_filter(gene: ConnectionGene) -> bool:

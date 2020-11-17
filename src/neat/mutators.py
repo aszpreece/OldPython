@@ -1,3 +1,5 @@
+import random
+from src.neat.helper import compare_connection_genes, compare_node_genes
 from numpy.testing._private.utils import assert_equal
 from src.neat.phenotype import Phenotype
 from typing import Callable, Dict, List, Optional, Tuple
@@ -14,7 +16,6 @@ from src.neat.genotype import ConnectionGene, Genotype, NodeGene, NodeType
 class NEAT:
 
     neat_random: Random
-    first_run: bool
 
     node_innovation_number: int
     connection_innovation_number: int
@@ -35,6 +36,7 @@ class NEAT:
 
     population: List[Genotype]
     fitness_function: Callable[[Genotype], float]
+
     fitness_scores: PriorityQueue
 
     generation_size: int
@@ -42,12 +44,18 @@ class NEAT:
     sim_disjoint_weight: float
     sim_excess_weight: float
     sim_weight_diff_weight: float
+    sim_genome_length_threshold: int
+
+    sim_threshold: float
+    species_index: int
+    species_prototypes: Dict[int, Genotype]
+    species_members_map: Dict[int, List[Genotype]]
+    highest_performer: Optional[Tuple[float, int]]
 
     def __init__(self, base_genotype: Genotype, generation_size: int,  fitness_function: Callable[[Genotype], float],
                  neat_random=Random()) -> None:
 
         self.neat_random = neat_random
-        self.first_run = True
 
         # Set our initial innovation numbers so we don't overlap with the genes already in the base genotype
         self.node_innovation_number = base_genotype.node_innov_start
@@ -63,7 +71,7 @@ class NEAT:
         self.new_weight_variance = 1.5
 
         # Hyperparams for split connection mutation
-        self.prob_to_split_connection = 0.05
+        self.prob_to_split_connection = 0.03
 
         # Hyperparams for new connection mutation
         self.prob_to_connect_nodes = 0.05
@@ -73,16 +81,27 @@ class NEAT:
 
         self.generation_size = generation_size
         # Create initial population
-        self.population = []
-        for i in range(generation_size):
-            self.population.append(copy.deepcopy(base_genotype))
 
         self.fitness_function = fitness_function
-        self.fitness_scores = PriorityQueue(generation_size)
+        self.fitness_scores = PriorityQueue(self.generation_size)
 
         self.sim_disjoint_weight = 1.0
         self.sim_excess_weight = 1.0
-        self.sim_weight_diff_weight = 1.0
+        self.sim_weight_diff_weight = 0.4
+        self.sim_genome_length_threshold = 20
+        self.sim_threshold = 3.0
+
+        self.species_index = 0
+        self.species_prototypes = {0: base_genotype}
+        self.species_members_map = {0: []}
+        self.population = []
+        self.highest_performer: Optional[Tuple[float, int]] = None
+
+        for i in range(generation_size):
+            genotype_copy = copy.deepcopy(base_genotype)
+            self.population.append(genotype_copy)
+            self.fitness_scores.put((1.0, i))
+            self.species_members_map[0].append(genotype_copy)
 
     def get_next_node_innov_num(self):
         self.node_innovation_number += 1
@@ -91,6 +110,10 @@ class NEAT:
     def get_next_conn_innov_num(self):
         self.connection_innovation_number += 1
         return self.connection_innovation_number
+
+    def get_next_species_number(self):
+        self.species_index += 1
+        return self.species_index
 
     def mutate(self, genotype: Genotype):
         """Mutate the given genotype
@@ -102,69 +125,78 @@ class NEAT:
         if self.neat_random.uniform(0, 1) <= self.prob_to_connect_nodes:
             self.add_connection_mutate(genotype, self.neat_random)
 
-    def run_generation(self) -> Optional[Tuple[float, int]]:
-        """Runs a generation and returns the score of the highest performing member
-
-        Returns:
-            float: [description]
+    def create_new_generation(self):
+        """Create a new generation from the fitness scores of the previous generation
         """
-        # Base copies of new generation
-        if not self.first_run:
-            # Select best performing genomes from previous generation
-            networks_to_take_forward = math.floor(
-                self.percentage_top_networks_passed_on * self.generation_size)
-            copies_per_network, remainder_to_fill = divmod(
-                self.generation_size, networks_to_take_forward)
-
-            new_population: List[Genotype] = []
-
-            # Copy across one unmodified version of the best performing network
-            _, index = self.fitness_scores.get()
-            new_population.append(copy.deepcopy(self.population[index]))
-
-            logging.debug(
-                f'Copied across 1 unmodified copy of the best network, {remainder_to_fill + copies_per_network - 1} mutated copies of the best network and {copies_per_network * (networks_to_take_forward - 1)} mutated versions of other networks')
-
-            # As it is possible the size of population may not divide cleanly, fill those remainder slots with mutated copies of the best network
-            # As well as the copies of the best network that would already be added
-            for i in range(remainder_to_fill + copies_per_network - 1):
-                _, index = self.fitness_scores.get()
-                genome_copy = copy.deepcopy(self.population[index])
-                self.mutate(genome_copy)
-                new_population.append(genome_copy)
-
-            # Fill rest of population with copies of the rest of the good performing networks
-            for i in range(networks_to_take_forward - 1):
-                _, index = self.fitness_scores.get()
-                for i in range(copies_per_network):
-                    genome_copy = copy.deepcopy(self.population[index])
-                    self.mutate(genome_copy)
-                    new_population.append(genome_copy)
-
-            self.population = new_population
-            assert_equal(len(self.population), self.generation_size)
-
-        else:
-            self.first_run = False
-
         self.split_signatures = {}
         self.new_conn_signatures = {}
-        self.fitness_scores = PriorityQueue()
+        self.species_members_map = {}
 
-        highest_performer: Optional[Tuple[float, int]] = None
+        # Select best performing genomes from previous generation
+        networks_to_take_forward = math.floor(
+            self.percentage_top_networks_passed_on * self.generation_size)
+        copies_per_network, remainder_to_fill = divmod(
+            self.generation_size, networks_to_take_forward)
+
+        new_population: List[Genotype] = []
+
+        # Copy across one unmodified version of the best performing network
+        _, index = self.fitness_scores.get()
+        unchanged_member = copy.deepcopy(self.population[index])
+        self.place_into_species(unchanged_member)
+        new_population.append(unchanged_member)
+
+        logging.debug(
+            f'Copied across 1 unmodified copy of the best network, {remainder_to_fill + copies_per_network - 1} mutated copies of the best network and {copies_per_network * (networks_to_take_forward - 1)} mutated versions of other networks')
+
+        # As it is possible the size of population may not divide cleanly, fill those remainder slots with mutated copies of the best network
+        # As well as the copies of the best network that would already be added
+        for i in range(remainder_to_fill + copies_per_network - 1):
+            _, index = self.fitness_scores.get()
+            genome_copy = copy.deepcopy(self.population[index])
+            self.mutate(genome_copy)
+            self.place_into_species(genome_copy)
+            new_population.append(genome_copy)
+
+        # Fill rest of population with copies of the rest of the good performing networks
+        for i in range(networks_to_take_forward - 1):
+            _, index = self.fitness_scores.get()
+            for i in range(copies_per_network):
+                genome_copy = copy.deepcopy(self.population[index])
+                self.mutate(genome_copy)
+                self.place_into_species(genome_copy)
+                new_population.append(genome_copy)
+
+        self.population = new_population
+
+        assert len(self.population) == self.generation_size
+
+    def run_generation(self) -> Optional[Tuple[float, int]]:
+        """Runs a generation and returns the score and id of the highest performing member in a pair
+
+        Returns:
+            [type]: [description]
+        """
+        self.set_species_prototypes()
+        self.create_new_generation()
+
+        self.fitness_scores = PriorityQueue()
+        self.highest_performer = None
 
         for index, network in enumerate(self.population):
 
             score = self.fitness_function(network)
+            network.fitness = score
+            species_size = self.get_species_count(network.species_id)
 
-            # Place the score of the network and its index in the scores queue
+            # Place the adjusted score of the network and its population index in the scores queue
             self.fitness_scores.put(
-                (score, index))
+                (score / species_size, index))
 
-            if highest_performer == None or score < highest_performer[0]:
-                highest_performer = (score, index)
+            if self.highest_performer == None or score < self.highest_performer[0]:
+                self.highest_performer = (score, index)
 
-        return highest_performer
+        return self.highest_performer
 
     def weight_mutate(self, genotype: Genotype, random: Random) -> None:
         """Given a genotype, mutate each weight.
@@ -180,13 +212,10 @@ class NEAT:
 
             if random.uniform(0, 1) < self.prob_perturbing_weights:
                 # Perturb the weights
-
-                connection_gene.weight += (random.random() * 2.0 - 1.0) * \
+                connection_gene.weight += random.uniform(-1, 1) * \
                     self.weight_perturb_scale
             else:
-                # Assign a new random from a normal distribution
-                connection_gene.weight = random.normalvariate(
-                    0, self.new_weight_variance)
+                connection_gene.weight = random.uniform(-4, 4)
 
     def split_connection_mutate(self, genotype: Genotype, random: Random) -> None:
         """Given a genotype, split a random connection and add an intermediate node.
@@ -330,74 +359,76 @@ class NEAT:
             gen2 (Genotype): second genotype.
 
         Returns:
-            float: similarity score based on the hyper params TODO
+            float: similarity score based on the hyper params:
+                self.sim_disjoint_weight
+                self.sim_excess_weight
+                self.sim_weight_diff_weight
         """
 
-        def compare_gene_list(genes1: List, genes2: List, weight_genes=False):
-            # Calculate number of similar genes
+        disjoint_conns, excess_conns, weight_diff_average = compare_connection_genes(
+            gen1.connection_genes, gen2.connection_genes)
 
-            gen1_genes_count = len(gen1.connection_genes)
-            gen2_genes_count = len(gen2.connection_genes)
-
-            gen1_index = 0
-            gen2_index = 0
-
-            disjoint_genes = 0
-
-            weight_diff_count = 0
-
-            while(gen1_index < gen1_genes_count and gen2_index < gen2_genes_count):
-                gene1 = genes1[gen1_index]
-                gene2 = genes2[gen2_index]
-
-                if gene1.innov_id == gene2.innov_id:
-                    # genes match, progress both pointers
-                    gen1_index += 1
-                    gen2_index += 1
-                    if weight_genes:
-                        weight_diff_count += abs(gene1.weight - gene2.weight)
-                    continue
-                elif gene1.innov_id > gene2.innov_id:
-                    # If the conn1 (top genome) has a larger innovation number
-                    # Progress conn2s counter
-                    gen2_index += 1
-                    disjoint_genes += 1
-
-                    continue
-                # This will always happen
-                else:  # conn1.innov_id < conn2.innov_id
-                    # If the conn2 (bottom genome) has a larger innovation number
-                    # progress conn1s counter
-                    gen1_index += 1
-                    disjoint_genes += 1
-                    continue
-
-            # Once we've got here we know some of the genes don't match
-            excess_genes = (gen1_genes_count - gen1_index) + \
-                (gen2_genes_count - gen2_index)
-
-            longest_genome = max(gen1_genes_count, gen2_genes_count)
-
-            # Don't bother to normalize small genomes
-            if longest_genome <= 20:
-                longest_genome = 1
-
-            average_weight_diff = weight_diff_count / longest_genome
-
-            return (disjoint_genes, excess_genes, average_weight_diff)
-
-        disjoint_conns, excess_cons, conn_weight_diff = compare_gene_list(
-            gen1.connection_genes, gen2.connection_genes, weight_genes=True)
-        disjoint_nodes, excess_nodes, bias_weight_diff = compare_gene_list(
+        disjoint_nodes, excess_nodes = compare_node_genes(
             gen1.node_genes, gen2.node_genes)
 
-        disjoint_total = (disjoint_conns + disjoint_nodes) / \
-            2 * self.sim_disjoint_weight
+        disjoints = disjoint_conns + disjoint_nodes
+        excesses = excess_conns + excess_nodes
 
-        excess_total = (excess_nodes + excess_cons) / \
-            2 * self.sim_excess_weight
+        normalisation_factor = max(
+            len(gen1.connection_genes) + len(gen1.node_genes),
+            len(gen2.connection_genes) + len(gen2.node_genes))
+        if normalisation_factor > self.sim_genome_length_threshold:
+            normalisation_factor = 1
 
-        weight_total = (conn_weight_diff + bias_weight_diff) / \
-            2 * self.sim_weight_diff_weight
+        return (disjoints * self.sim_disjoint_weight) / normalisation_factor + \
+            (excesses * self.sim_excess_weight) / normalisation_factor + \
+            weight_diff_average * self.sim_weight_diff_weight
 
-        return disjoint_total + excess_total + weight_total
+    def set_species_prototypes(self):
+        """Select a random member of each species to be the species representative for the next generation
+        """
+
+        self.species_prototypes = {}
+        for species_id, member_list in self.species_members_map.items():
+            self.species_prototypes[species_id] = random.choice(member_list)
+
+    def place_into_species(self, genotype: Genotype) -> None:
+        """Place the given genotype into a species or create a new one if non match
+
+        Args:
+            genotype (Genotype): Genotype to place into species
+        """
+        #
+        for species_id, prototype in self.species_prototypes.items():
+            if self.similarity_operator(prototype, genotype) <= self.sim_threshold:
+                self.species_members_map.setdefault(
+                    species_id, []).append(genotype)
+                genotype.species_id = species_id
+                return
+
+        # Create new species if none match
+        new_species_num = self.get_next_species_number()
+        self.species_prototypes[new_species_num] = genotype
+        self.species_members_map[new_species_num] = [genotype]
+        genotype.species_id = new_species_num
+        logging.info(f'Creating new species {new_species_num}')
+
+    def get_species_fitness(self, id) -> float:
+        # Loop through each species and calculate their fitness as a whole
+        species_size = self.get_species_count(id)
+        species_fitness_sum = 0
+        for species_member in self.species_members_map[id]:
+            species_fitness_sum == species_member.fitness
+
+        return species_fitness_sum / species_size
+
+    def get_species_count(self, id: int) -> int:
+        """Get the amount of members a species has
+
+        Args:
+            id (int): Id of species to get count for
+
+        Returns:
+            int: Amount of members that species has
+        """
+        return len(self.species_members_map.get(id, []))

@@ -65,7 +65,7 @@ def train_sin():
     base_genotype = Genotype()
 
     base_genotype.node_genes = [
-        NodeGene(0, NodeType.BIAS),
+        NodeGene(0, NodeType.INPUT),
         NodeGene(1, NodeType.INPUT),
         NodeGene(2, NodeType.OUTPUT)
     ]
@@ -89,7 +89,7 @@ def train_sin():
         xs = []
         results = []
         expected = []
-        for x in np.linspace(-2 * math.pi, 2 * math.pi, 100):
+        for x in np.linspace(-1 * math.pi, 1 * math.pi, 100):
             xs.append(x)
             result = phenotype.calculate_no_rec({
                 0: 1, 1: radian_to_scalar(x)  # Normalize input
@@ -108,21 +108,18 @@ def train_sin():
         score: float = 0
 
         test_cases: List[Tuple[float, float]] = [
-            (input, math.sin(input)) for input in np.linspace(-2 * math.pi, 2 * math.pi, 50)]
-
-        # test_cases: List[Tuple[float, float]] = []
-        for i in range(12):
-            r = (random.random() * math.pi * 2)
-            test_cases.append((r, math.sin(r)))
+            (input, math.sin(input)) for input in np.linspace(-1 * math.pi, 1 * math.pi, 50)]
 
         phenotype = Phenotype(genotype)
-        for ione, expected in test_cases:
+        for x, expected in test_cases:
             result = phenotype.calculate_no_rec({
-                0: 1, 1: radian_to_scalar(ione)
+                0: 1, 1: radian_to_scalar(x)
             })[2]
 
+            out = scalar_to_output(result)
+
             # Mean square error
-            score += (scalar_to_output(result) - expected)**2
+            score += (out - expected)**2
 
         return (1/len(test_cases)) * score
 
@@ -131,10 +128,10 @@ def train_sin():
 
 def train_neat(base_genotype: Genotype, fitness_func, result_func=lambda genotype, figure: None):
 
-    neat = NEAT(base_genotype, 100, fitness_func)
-    neat.percentage_top_networks_passed_on = 0.1
-    neat.prob_to_split_connection = 0.2
-    neat.prob_to_connect_nodes = 0.1
+    neat = NEAT(base_genotype, 150, fitness_func)
+    neat.percentage_top_networks_passed_on = 0.2
+    # neat.prob_to_split_connection = 0.5
+    # neat.prob_to_connect_nodes = 0.5
 
     plt.ion()
 
@@ -157,6 +154,7 @@ def train_neat(base_genotype: Genotype, fitness_func, result_func=lambda genotyp
                 print(f'Score for generation {generation} is {score}')
 
             solution = neat.population[index]
+
             old_score = score
 
             error.append(score)

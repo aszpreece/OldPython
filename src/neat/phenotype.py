@@ -1,3 +1,4 @@
+import math
 from typing import Deque, Dict, List, Set, Tuple
 from collections import deque
 from src.neat.genotype import ConnectionGene, Genotype, NodeType
@@ -8,6 +9,10 @@ def relu(x: float) -> float:
         return 0
     else:
         return x
+
+
+def sigmoid(x: float) -> float:
+    return 1/(1+math.exp(-x))
 
 
 def creates_cycle(connection: ConnectionGene, conn_dict: "dict[int, list[Tuple[int, float, int]]]", recurrent_connections: Set[int]) -> bool:
