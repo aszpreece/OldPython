@@ -129,9 +129,10 @@ def train_sin():
 def train_neat(base_genotype: Genotype, fitness_func, result_func=lambda genotype, figure: None):
 
     neat = NEAT(base_genotype, 150, fitness_func)
-    neat.percentage_top_networks_passed_on = 0.2
-    # neat.prob_to_split_connection = 0.5
-    # neat.prob_to_connect_nodes = 0.5
+
+    # neat.percentage_top_networks_passed_on = 0.2
+    # neat.prob_to_split_connection = 0.2
+    # neat.prob_to_connect_nodes = 0.3
 
     plt.ion()
 

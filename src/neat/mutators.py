@@ -87,7 +87,7 @@ class NEAT:
 
         self.sim_disjoint_weight = 1.0
         self.sim_excess_weight = 1.0
-        self.sim_weight_diff_weight = 0.4
+        self.sim_weight_diff_weight = 0.3
         self.sim_genome_length_threshold = 20
         self.sim_threshold = 3.0
 
@@ -394,7 +394,7 @@ class NEAT:
 
     def place_into_species(self, genotype: Genotype) -> None:
         """Place the given genotype into a species or create a new one if non match
-
+        Sets the species property on the genotype.
         Args:
             genotype (Genotype): Genotype to place into species
         """
@@ -404,6 +404,8 @@ class NEAT:
                 self.species_members_map.setdefault(
                     species_id, []).append(genotype)
                 genotype.species_id = species_id
+                # logging.info(f'Placed into old species {species_id}')
+
                 return
 
         # Create new species if none match
