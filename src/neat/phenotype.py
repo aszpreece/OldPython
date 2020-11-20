@@ -1,7 +1,9 @@
+
 import math
-from typing import Deque, Dict, List, Set, Tuple
 from collections import deque
-from src.neat.genotype import ConnectionGene, Genotype, NodeType
+from src.neat.node_type import NodeType
+from typing import Deque, Dict, List, Set, Tuple
+# from src.neat.genotype import ConnectionGene, Genotype, NodeType
 
 
 def relu(x: float) -> float:
@@ -13,41 +15,6 @@ def relu(x: float) -> float:
 
 def sigmoid(x: float) -> float:
     return 1/(1+math.exp(-x))
-
-
-def creates_cycle(connection: ConnectionGene, conn_dict: "dict[int, list[Tuple[int, float, int]]]", recurrent_connections: Set[int]) -> bool:
-
-    if (connection.source == connection.to):
-        return True
-
-    visited_set: Set[int] = set()
-    stack: Deque[int] = deque()
-
-    stack.append(connection.source)
-
-    target = connection.to
-
-    # Figure out if there is a cycle by traversing the neuron connections
-    # in reverse starting from the node this connection connects 'from' and attempt to find
-    # a route back to it whilst avoiding previously introduced recurrent connections
-    while (len(stack) != 0):
-        node = stack.pop()
-        visited_set.add(node)
-
-        for source, _, innov_id in conn_dict.get(node, []):
-            # Avoid recurrent connections
-            if innov_id in recurrent_connections:
-                continue
-            # Else, check if we have found the target
-            if source == target:
-                return True
-            # Avoid nodes we have already visited
-            if source in visited_set:
-                continue
-
-            stack.append(source)
-
-    return False
 
 
 def calculate_execution_order(input_node_ids: List[int], non_input_node_ids: List[int], recurrent_connections: Set[int], connections: "dict[int, list[Tuple[int, float, int]]]"):
@@ -93,7 +60,7 @@ class Phenotype:
     recurrent_connections: Set[int]
     recurrent_nodes: Set[int]
 
-    def __init__(self, genome: Genotype) -> None:
+    def __init__(self, genome) -> None:
 
         # Dict of node activation values indexed by node id
         # (activation values are the node inputs values with the activation function applied)
@@ -134,7 +101,7 @@ class Phenotype:
             if conn.enabled == False:
                 continue
             # If the connection causes a cycle, mark it as recurrent
-            if creates_cycle(conn, self.connections, self.recurrent_connections):
+            if self.creates_cycle_in_phenotype(conn):
                 self.recurrent_connections.add(conn.innov_id)
                 self.recurrent_nodes.add(conn.source)
             self.connections.setdefault(conn.to, []).append(
@@ -143,6 +110,9 @@ class Phenotype:
         # After this, we need to calculate our execution plan
         self.nodes = calculate_execution_order(
             self.input_nodes, self.nodes, self.recurrent_connections, self.connections)
+
+        # Set the genome's phenotype
+        genome.phenotype = self
 
     def calculate(self, inputs: "dict[int, float]"):
 
@@ -178,7 +148,14 @@ class Phenotype:
         ])
 
     def calculate_no_rec(self, inputs: "dict[int, float]"):
+        """Evaluates neural network but ignores recursive connections
 
+        Args:
+            inputs (dict[int, float]): [description]
+
+        Returns:
+            [type]: [description]
+        """
         # Initialize the input nodes with the given activations
         for key, activation in inputs.items():
             self.node_activations[key] = activation
@@ -196,3 +173,44 @@ class Phenotype:
         return dict([
             (output_node, self.node_activations[output_node]) for output_node in self.output_nodes
         ])
+
+    def creates_cycle_in_phenotype(self, connection) -> bool:
+        """Returns a boolean which tells us whether or not the proposed gene in 'connection' would create a recurrent connection
+
+        Args:
+            connection (ConnectionGene): Proposed gene
+
+        Returns:
+            bool: Whether or not there would be a cycle
+        """
+        if (connection.source == connection.to):
+            return True
+
+        visited_set: Set[int] = set()
+        stack: Deque[int] = deque()
+
+        stack.append(connection.source)
+
+        target = connection.to
+
+        # Figure out if there is a cycle by traversing the neuron connections
+        # in reverse starting from the node this connection connects 'from' and attempt to find
+        # a route back to it whilst avoiding previously introduced recurrent connections
+        while (len(stack) != 0):
+            node = stack.pop()
+            visited_set.add(node)
+
+            for source, _, innov_id in self.connections.get(node, []):
+                # Avoid recurrent connections
+                if innov_id in self.recurrent_connections:
+                    continue
+                # Else, check if we have found the target
+                if source == target:
+                    return True
+                # Avoid nodes we have already visited
+                if source in visited_set:
+                    continue
+
+                stack.append(source)
+
+        return False

@@ -1,6 +1,6 @@
 import unittest
 from src.neat.genotype import ConnectionGene
-from src.neat.phenotype import creates_cycle
+from src.neat.phenotype import creates_cycle_in_phenotype
 
 
 class TestCreatesCycle(unittest.TestCase):
@@ -15,7 +15,7 @@ class TestCreatesCycle(unittest.TestCase):
 
         recurrents = set()
 
-        cycle = creates_cycle(conn_gene, conn_dict, recurrents)
+        cycle = creates_cycle_in_phenotype(conn_gene, conn_dict, recurrents)
 
         self.assertTrue(cycle)
 
@@ -30,7 +30,7 @@ class TestCreatesCycle(unittest.TestCase):
 
         recurrents = set()
 
-        cycle = creates_cycle(conn_gene, conn_dict, recurrents)
+        cycle = creates_cycle_in_phenotype(conn_gene, conn_dict, recurrents)
 
         self.assertTrue(cycle)
 
@@ -46,7 +46,7 @@ class TestCreatesCycle(unittest.TestCase):
 
         recurrents = set()
 
-        cycle = creates_cycle(conn_gene, conn_dict, recurrents)
+        cycle = creates_cycle_in_phenotype(conn_gene, conn_dict, recurrents)
 
         self.assertFalse(cycle)
 
@@ -64,7 +64,7 @@ class TestCreatesCycle(unittest.TestCase):
         # to be marked as recurrent would be
         conn_gene = ConnectionGene(innov_id=103, source=4, to=1, weight=0.1)
         recurrents = set()
-        cycle = creates_cycle(conn_gene, conn_dict, recurrents)
+        cycle = creates_cycle_in_phenotype(conn_gene, conn_dict, recurrents)
         self.assertTrue(cycle)
 
         # Add the connection
@@ -77,5 +77,5 @@ class TestCreatesCycle(unittest.TestCase):
         # BUT only if the algorithm properly ignores the recurrent connection FROM 4 TO 1
 
         conn_gene = ConnectionGene(innov_id=104, source=2, to=4, weight=0.1)
-        cycle = creates_cycle(conn_gene, conn_dict, recurrents)
+        cycle = creates_cycle_in_phenotype(conn_gene, conn_dict, recurrents)
         self.assertFalse(cycle)

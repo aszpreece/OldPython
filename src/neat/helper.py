@@ -1,5 +1,6 @@
 
-from typing import List, Tuple
+from collections import Set, deque
+from typing import Deque, List, Tuple
 from src.neat.genotype import ConnectionGene, NodeGene
 
 

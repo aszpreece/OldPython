@@ -1,4 +1,4 @@
-from src.neat.mutators import NEAT
+from src.neat.neat import NEAT
 from src.neat.helper import compare_connection_genes, compare_node_genes
 import unittest
 from src.neat.genotype import ConnectionGene, Genotype, NodeGene, NodeType
