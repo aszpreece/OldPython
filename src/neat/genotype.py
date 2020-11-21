@@ -67,6 +67,7 @@ class Genotype:
         return len(self.node_genes), len(self.connection_genes), self.get_enabled_connections_count()
 
     def copy(self) -> Genotype:
+        self.species = None
         phenotype = self.phenotype
         self.phenotype = None
         c = copy.deepcopy(self)

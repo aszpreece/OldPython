@@ -14,6 +14,7 @@
     "python.testing.nosetestsEnabled": false,
     "python.testing.unittestEnabled": true,
     "python.linting.enabled": true,
+    "python.linting.pylintUseMinimalCheckers": false,
     "cSpell.words": [
         "Hyperparams",
         "PYTHONPATH",
