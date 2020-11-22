@@ -53,13 +53,12 @@ class NEAT:
         self.connection_innovation_number = base_genotype.conn_innov_start
 
         # Hyperparams for best performing members
-        self.percentage_top_networks_passed_on = 0.05
 
         # Hyperparams for weight mutation
-        self.prob_to_mutate_weights = 0.8
-        self.weight_perturb_scale = 1.0
-        self.prob_perturbing_weights = 0.1
-        self.new_weight_variance = 1.5
+        self.prob_to_mutate_weights = 0.9
+        self.weight_perturb_scale = 0.6
+        self.prob_perturbing_weights = 0.95
+        self.new_weight_power = 2
 
         # Hyperparams for split connection mutation
         self.prob_to_split_connection = 0.03
@@ -77,15 +76,19 @@ class NEAT:
 
         self.sim_disjoint_weight: float = 1.0
         self.sim_excess_weight: float = 1.0
-        self.sim_weight_diff_weight: float = 0.4
+        self.sim_weight_diff_weight: float = 0.1
         self.sim_genome_length_threshold: int = 20
         self.sim_threshold: float = 3.0
 
-        self.species_index: int = 0
         self.population = []
         self.highest_performer: Optional[Genotype] = None
 
+        self.species_index: int = 0
         self.species: Dict[int, Species] = {}
+        self.species_target: Optional[int] = 20
+        self.species_mod = 0.3
+
+        self.first_run = True
 
         for i in range(generation_size):
             genotype_copy = copy.deepcopy(base_genotype)
@@ -110,22 +113,24 @@ class NEAT:
         fit_members_count = 0
         fittest_members: List[Genotype] = []
 
+        # Sort members in descending order of fitness
+        species.members.sort(
+            key=lambda genotype: genotype.fitness, reverse=True)
+
         i = 0
         while i < species.count():
             member = species.members[i]
-            if fit_members_count < 2 or member.fitness < average_fitness:
+            if fit_members_count < 2 or member.fitness >= average_fitness:
                 fittest_members.append(member)
                 fit_members_count += 1
+                i += 1
             else:
                 break
-        else:
-            assert False, 'No fit members of species/ species is empty!'
 
-        # Sort members in descending order of fitness
-        fittest_members.sort(
-            key=lambda genotype: genotype.fitness, reverse=True)
+        assert fit_members_count > 0, 'No fit members of species/ species is empty!'
+
         babies_made = 0
-        if babies_allocated > 3:
+        if babies_allocated > 6:
             babies_made += 1
             logging.debug(
                 f'Copying across unmodified member of species {species.species_id}')
@@ -138,6 +143,7 @@ class NEAT:
             self.mutate(baby)
             new_population.append(baby)
             babies_made += 1
+            i += 1
 
         assert babies_made == babies_allocated, 'Not made enough babies to fill the amount allocated!'
 
@@ -154,6 +160,9 @@ class NEAT:
     def create_new_generation(self):
         """Create a new generation from the fitness scores of the previous generation
         """
+
+        self.split_signatures = {}
+        self.new_conn_signatures = {}
 
         # Figure out the babies each species deserve
         # (Total Adjusted Fitness in species) / (Average species fitness)
@@ -172,7 +181,13 @@ class NEAT:
             babies_per_species.put((share, species_id))
 
         babies_given_out = 0
+
         new_population: List[Genotype] = []
+        # Copy across best individual unmodified
+        assert self.highest_performer is not None and self.highest_performer.species is not None
+        new_population.append(self.highest_performer.copy())
+        babies_given_out += 1
+
         while len(babies_per_species.queue) > 0:
             babies_float, species_id = babies_per_species.get()
             babies_int = max(round(babies_float), 1)
@@ -193,6 +208,7 @@ class NEAT:
                 self.highest_performer.species, babies_left, new_population)
             babies_given_out += babies_left
 
+        self.population = new_population
         assert babies_given_out == self.generation_size, 'Not given out enough babies'
         assert len(
             self.population) == self.generation_size, 'New generation size is incorrect'
@@ -203,8 +219,19 @@ class NEAT:
         Returns:
             Genotype: The genotype of the best performing member.
         """
+        if not self.first_run:
+            self.create_new_generation()
+        else:
+            self.first_run = False
+
+        if self.species_target is not None:
+            if len(self.species) > self.species_target:
+                self.sim_threshold += self.species_mod
+            elif len(self.species) < self.species_target:
+                self.sim_threshold -= self.species_mod
+
         self.cycle_species()
-        self.create_new_generation()
+        self.place_into_species()
 
         self.highest_performer: Optional[Genotype] = None
 
@@ -241,7 +268,8 @@ class NEAT:
                 connection_gene.weight += random.uniform(-1, 1) * \
                     self.weight_perturb_scale
             else:
-                connection_gene.weight = random.uniform(-4, 4)
+                connection_gene.weight = random.uniform(
+                    -1, 1) * self.new_weight_power
 
     def split_connection_mutate(self, genotype: Genotype, random: Random) -> None:
         """Given a genotype, split a random connection and add an intermediate node.
@@ -339,15 +367,17 @@ class NEAT:
                 # Looping through the second list, check whether or not the second node is already connected to the first node (in the same direction)
                 connection = conns_from_first.get(second, None)
                 # If there is no connection gene at all there won't be an entry in the hash table and it will rteurn Nome
-                if connection == None:
+                # UPDATED now ignores old connection genes
+                if connection == None or connection.enabled == False:
                     pair = (first, second)
                     break
-                # If there is a disabled connection we should re enable it TODO is this okay?
-                elif connection.enabled == False:
-                    # Flag that we have re enabled a gene
-                    re_enabled_flag = True
-                    connection.enabled = True
-                    break
+
+                # # If there is a disabled connection we should re enable it TODO is this okay?
+                # elif connection.enabled == False:
+                #     # Flag that we have re enabled a gene
+                #     re_enabled_flag = True
+                #     connection.enabled = True
+                #     break
 
             else:
                 # If this node is connected to everything then we cannot connect it to a new node and we must select a new 'first node
@@ -375,7 +405,7 @@ class NEAT:
                 'Connection mutation has happened before this generation. Using old innovation number.')
 
         genotype.connection_genes.append(
-            ConnectionGene(innov_id, pair[0], pair[1], 1.0))
+            ConnectionGene(innov_id, pair[0], pair[1], random.uniform(-1, 1) * self.new_weight_power))
 
     def similarity_operator(self, gen1: Genotype, gen2: Genotype) -> float:
         """Takes two genotypes and calculates their similarity
@@ -428,16 +458,16 @@ class NEAT:
                 assert species.prototype is not None
                 if self.similarity_operator(species.prototype, genotype) <= self.sim_threshold:
                     species.add_member(genotype)
-                    return
+                    break
+            else:
+                # Create new species if none match
+                new_species_num = self.get_next_species_number()
+                new_species = Species(new_species_num, genotype)
+                new_species.add_member(genotype)
+                assert self.species.get(new_species_num) is None
+                self.species[new_species_num] = new_species
 
-            # Create new species if none match
-            new_species_num = self.get_next_species_number()
-            new_species = Species(new_species_num, genotype)
-            new_species.add_member(genotype)
-            assert self.species.get(new_species_num) is None
-            self.species[new_species_num] = new_species
-
-            logging.info(f'Creating new species {new_species_num}')
+                logging.info(f'Creating new species {new_species_num}')
 
         extinct: List[int] = []
         for species_id, species in self.species.items():

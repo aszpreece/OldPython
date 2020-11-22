@@ -141,7 +141,7 @@ class Phenotype:
 
             self.node_inputs[node] = total
 
-            self.node_activations[node] = relu(total)
+            self.node_activations[node] = sigmoid(total)
 
         return dict([
             (output_node, self.node_activations[output_node]) for output_node in self.output_nodes
@@ -168,7 +168,7 @@ class Phenotype:
 
             self.node_inputs[node] = total
 
-            self.node_activations[node] = relu(total)
+            self.node_activations[node] = sigmoid(total)
 
         return dict([
             (output_node, self.node_activations[output_node]) for output_node in self.output_nodes

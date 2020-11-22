@@ -8,7 +8,13 @@
             "name": "XOR Test",
             "type": "python",
             "request": "launch",
-            "module": "experiment.xor_harness"
+            "module": "experiment.xor"
+        },
+        {
+            "name": "Sine Test",
+            "type": "python",
+            "request": "launch",
+            "module": "experiment.sin"
         },
         {
             "name": "Test UI",

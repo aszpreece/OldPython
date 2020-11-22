@@ -1,9 +1,7 @@
 from __future__ import annotations
 
 import copy
-
 from src.neat.node_type import NodeType
-from src.neat.species import Species
 from typing import List, Optional
 from src.neat.phenotype import Phenotype
 
@@ -42,7 +40,7 @@ class Genotype:
     node_innov_start: int
     conn_innov_start: int
 
-    species: Optional[Species]
+    # species: "optional[genotype]"
     fitness: float
     adjusted_fitness: float
     phenotype: Optional[Phenotype]
@@ -67,10 +65,15 @@ class Genotype:
         return len(self.node_genes), len(self.connection_genes), self.get_enabled_connections_count()
 
     def copy(self) -> Genotype:
+        species = self.species
         self.species = None
         phenotype = self.phenotype
         self.phenotype = None
+
         c = copy.deepcopy(self)
+
         c.phenotype = phenotype
+
         self.phenotype = phenotype
+        self.species = species
         return c
