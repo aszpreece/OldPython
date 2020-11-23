@@ -52,7 +52,7 @@ class Genotype:
         self.conn_innov_start = 0
         self.fitness = 0
         self.adjusted_fitness = 0
-        self.species = None
+        # self.species = None
         self.phenotype = None
 
     def get_enabled_connections_count(self):

@@ -1,11 +1,12 @@
 
+from matplotlib.pyplot import axis
 from experiment.run_experiment import train_neat
 import random
 import math
 from typing import List, Tuple
 
 from matplotlib import pyplot as plt
-from src.neat.mutators import NEAT
+from src.neat.neat import NEAT
 from src.neat.phenotype import Phenotype
 from src.neat.genotype import ConnectionGene, Genotype, NodeGene, NodeType
 from src.ui.graphnetwork import create_graph
@@ -46,24 +47,32 @@ fig.show()
 
 
 def plot_sin(neat: NEAT):
-    phenotype = Phenotype(neat.highest_performer)
 
-    xs = []
-    results = []
-    expected = []
-    for x in np.linspace(-1 * math.pi, 1 * math.pi, 100):
-        xs.append(x)
-        result = phenotype.calculate_no_rec({
-            0: 1, 1: radian_to_scalar(x)  # Normalize input
-        })[2]
-        expected.append(math.sin(x))
-        results.append(scalar_to_output(result))
-    axarr[0].clear()
-    axarr[0].set(title="Results",
+    def plot_sin(genotype, axis):
+        phenotype = Phenotype(genotype)
+
+        xs = []
+        results = []
+        expected = []
+        for x in np.linspace(-1 * math.pi, 1 * math.pi, 100):
+            xs.append(x)
+            result = phenotype.calculate_no_rec({
+                0: 1, 1: radian_to_scalar(x)  # Normalize input
+            })[2]
+            expected.append(math.sin(x))
+            results.append(scalar_to_output(result))
+        axis.clear()
+        axis.set(title="Results",
                  xlabel='x (Radians)', ylabel='y')
-    axarr[0].plot(xs, expected)
-    axarr[0].plot(xs, results)
-    axarr[0].legend(["Expected", "Result"])
+        axis.plot(xs, expected)
+        axis.plot(xs, results)
+        axis.legend(["Expected", "Result"])
+        axis.text(0.1, 0.9, f'{genotype.species.species_id}', fontsize=12)
+
+    rand = Phenotype(random.choice(neat.population))
+
+    plot_sin(neat.highest_performer, axarr[0])
+    plot_sin(random.choice(neat.population), axarr[1])
 
 
 def fitness_function_sin(genotype: Genotype) -> float:

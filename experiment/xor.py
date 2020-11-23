@@ -5,7 +5,7 @@ from typing import List, Tuple
 
 from matplotlib import pyplot as plt
 from matplotlib.pyplot import title, xlabel, ylabel
-from src.neat.mutators import NEAT
+from src.neat.neat import NEAT
 from src.neat.phenotype import Phenotype
 from src.neat.genotype import ConnectionGene, Genotype, NodeGene, NodeType
 from src.ui.graphnetwork import create_graph
