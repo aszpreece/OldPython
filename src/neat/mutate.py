@@ -9,6 +9,10 @@ import logging
 
 class MutationManager:
 
+    def __init__(self, starting_connection, starting_node) -> None:
+        self.connection_innovation_number = starting_connection
+        self.node_innovation_number = starting_node
+
     def cycle(self):
         pass
 
@@ -26,7 +30,8 @@ class MutationManager:
 
 class DefaultMutationManager(MutationManager):
 
-    def __init__(self) -> None:
+    def __init__(self, starting_connection, starting_node) -> None:
+        super().__init__(starting_connection, starting_node)
         self.split_signatures = {}
         self.new_conn_signatures = {}
 
@@ -39,7 +44,7 @@ class DefaultMutationManager(MutationManager):
     def mutate(self, genotype: Genotype, config: NeatConfig):
         """Mutate the given genotype"""
         if config.neat_random.uniform(0, 1) <= config.prob_to_mutate_weights:
-            self.weight_mutate(genotype, config.neat_random)
+            self.weight_mutate(genotype, config)
         if config.neat_random.uniform(0, 1) <= config.prob_to_split_connection:
             self.split_connection_mutate(genotype, config)
         if config.neat_random.uniform(0, 1) <= config.prob_to_connect_nodes:

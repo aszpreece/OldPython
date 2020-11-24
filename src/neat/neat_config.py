@@ -1,6 +1,4 @@
 from random import Random
-from src.neat.reproduction import DefaultReproductionManager
-from src.neat.mutate import DefaultMutationManager
 
 
 class NeatConfig():
@@ -8,8 +6,8 @@ class NeatConfig():
     def __init__(self,
                  fitness_function,
                  base_genotype,
-                 mutation_manager=DefaultMutationManager(),
-                 reproduction=DefaultReproductionManager(),
+                 mutation_manager,
+                 reproduction,
                  prob_to_mutate_weights=0.8,
                  weight_perturb_scale=0.45,
                  prob_perturbing_weights=0.95,
@@ -24,6 +22,7 @@ class NeatConfig():
                  sim_threshold=3.0,
                  species_target=None,
                  species_mod=0.3,
+                 species_stag_thresh=20,
                  neat_random=Random()
                  ):
 
@@ -55,3 +54,4 @@ class NeatConfig():
 
         self.species_target = species_target
         self.species_mod = species_mod
+        self.species_stag_thresh = species_stag_thresh

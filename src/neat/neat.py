@@ -42,35 +42,36 @@ class NEAT:
             for i in range(self.config.generation_size):
                 genotype_copy = copy.deepcopy(self.config.base_genotype)
                 self.population.add_member(genotype_copy)
+            self.first_run = False
 
         self.adjust_compatibility()
         self.cycle_species()
         self.place_into_species()
 
-        self.highest_performer: Optional[Genotype] = None
+        self.population.best_individual = None
 
-        self.total_fitness = 0
-        self.total_adjusted_fitness = 0
+        self.population.total_fitness = 0
+        self.population.total_adjusted_fitness = 0
         for genotype in self.population.population:
 
             score = self.config.fitness_function(genotype)
             genotype.fitness = score
             genotype.adjusted_fitness = score / genotype.species.count()
-            self.total_fitness += genotype.fitness
-            self.total_adjusted_fitness += genotype.adjusted_fitness
+            self.population.total_fitness += genotype.fitness
+            self.population.total_adjusted_fitness += genotype.adjusted_fitness
 
-            if self.highest_performer == None or genotype.fitness > self.highest_performer.fitness:
-                self.highest_performer = genotype
+            if self.population.best_individual == None or genotype.fitness > self.population.best_individual.fitness:
+                self.population.best_individual = genotype
 
-        assert self.highest_performer is not None
-        return self.highest_performer
+        assert self.population.best_individual is not None
+        return self.population.best_individual
 
     def adjust_compatibility(self):
         if self.config.species_target is not None:
             if len(self.species) > self.config.species_target:
-                self.sim_threshold += self.config.species_mod
+                self.config.sim_threshold += self.config.species_mod
             elif len(self.species) < self.config.species_target:
-                self.sim_threshold -= self.config.species_mod
+                self.config.sim_threshold -= self.config.species_mod
 
     def cycle_species(self):
         """Select a random member of each species to be the species representative for the next generation and reset their memberships

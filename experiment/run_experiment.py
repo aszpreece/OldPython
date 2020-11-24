@@ -1,6 +1,9 @@
 
 import random
 import math
+from src.neat.mutate import DefaultMutationManager
+from src.neat.reproduction import DefaultReproductionManager, ReproductionManager
+from src.neat.neat_config import NeatConfig
 from typing import List, Tuple
 
 from matplotlib import pyplot as plt
@@ -17,7 +20,15 @@ from typing import List, Tuple
 
 def train_neat(base_genotype: Genotype, fitness_func, result_func=lambda neat: None):
 
-    neat = NEAT(base_genotype, 150, fitness_func)
+    config = NeatConfig(
+        fitness_func,
+        base_genotype=base_genotype,
+        reproduction=DefaultReproductionManager(),
+        generation_size=150,
+        mutation_manager=DefaultMutationManager(3, 3),
+        species_target=10
+    )
+    neat = NEAT(config)
 
     plt.ion()
 
@@ -46,8 +57,8 @@ def train_neat(base_genotype: Genotype, fitness_func, result_func=lambda neat: N
             complexity.append(solution.get_complexity())
 
             axarr[0].clear()
-            axarr[0].set(title="Loss",
-                         xlabel='Generation', ylabel='Error')
+            axarr[0].set(title="Fitness",
+                         xlabel='Generation', ylabel='Fitness')
             axarr[0].plot(error)
 
             axarr[1].clear()

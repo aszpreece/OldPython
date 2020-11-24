@@ -4,7 +4,7 @@ import math
 from random import Random
 from src.neat.helper import compare_connection_genes
 from src.neat.neat_config import NeatConfig
-from typing import List, Optional
+from typing import List, Optional, Tuple
 from src.neat.genotype import Genotype
 
 
@@ -15,7 +15,6 @@ class Species:
         self.prototype: Optional[Genotype] = prototype
         self.species_id = species_id
         self.age: int = 0
-        self.best_score: float = 0
         self.cycles_since_improvement = 0
 
     def count(self):
@@ -28,15 +27,11 @@ class Species:
 
     def get_species_fitness(self) -> float:
 
+        max_fitness = None
         species_fitness_sum = 0
         for species_member in self.members:
             species_fitness_sum += species_member.fitness
-            if species_member.fitness > self.best_score:
-                self.best_score = species_member.fitness
-                self.cycles_since_improvement = 0
 
-        if self.cycles_since_improvement > 20:
-            species_fitness_sum *= math.exp(-self.cycles_since_improvement - 20)
         return species_fitness_sum
 
     def cycle(self, rand: Random):
@@ -85,44 +80,3 @@ class Species:
         return (disjoints * config.sim_disjoint_weight) / normalisation_factor + \
             (excesses * config.sim_excess_weight) / normalisation_factor + \
             weight_diff_average * config.sim_weight_diff_weight
-
-    def create_species_offspring(self, babies_allocated: int, config: NeatConfig, new_population) -> None:
-
-        average_fitness = self.get_species_fitness() / self.count()
-
-        fit_members_count = 0
-        fittest_members: List[Genotype] = []
-
-        # Sort members in descending order of fitness
-        self.members.sort(
-            key=lambda genotype: genotype.fitness, reverse=True)
-
-        i = 0
-        while i < self.count():
-            member = self.members[i]
-            if fit_members_count < 2 or member.fitness >= average_fitness:
-                fittest_members.append(member)
-                fit_members_count += 1
-                i += 1
-            else:
-                break
-
-        assert fit_members_count > 0, 'No fit members of species/ species is empty!'
-
-        babies_made = 0
-        if babies_allocated > 6:
-            babies_made += 1
-            logging.debug(
-                f'Copying across unmodified member of species {self.species_id}')
-            new_population.append(fittest_members[0].copy())
-
-        i = 0
-        while babies_made < babies_allocated:
-            i = i % len(fittest_members)
-            baby = fittest_members[i].copy()
-            config.mutation_manager.mutate(baby)
-            new_population.append(baby)
-            babies_made += 1
-            i += 1
-
-        assert babies_made == babies_allocated, 'Not made enough babies to fill the amount allocated!'

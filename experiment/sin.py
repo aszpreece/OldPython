@@ -69,10 +69,8 @@ def plot_sin(neat: NEAT):
         axis.legend(["Expected", "Result"])
         axis.text(0.1, 0.9, f'{genotype.species.species_id}', fontsize=12)
 
-    rand = Phenotype(random.choice(neat.population))
-
-    plot_sin(neat.highest_performer, axarr[0])
-    plot_sin(random.choice(neat.population), axarr[1])
+    plot_sin(neat.population.best_individual, axarr[0])
+    plot_sin(random.choice(neat.population.population), axarr[1])
 
 
 def fitness_function_sin(genotype: Genotype) -> float:
