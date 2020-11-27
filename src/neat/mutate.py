@@ -36,7 +36,7 @@ class DefaultMutationManager(MutationManager):
         self.new_conn_signatures = {}
 
     def cycle(self):
-        """Reset themutation manager so it is ready for a new generation
+        """Reset the mutation manager so it is ready for a new generation
         """
         self.split_signatures = {}
         self.new_conn_signatures = {}
@@ -87,7 +87,6 @@ class DefaultMutationManager(MutationManager):
         # Fix: no longer tries to split disabled genes
         enabledGenes = list(filter(lambda conn: conn.enabled,
                                    genotype.connection_genes))
-        length = len(enabledGenes)
 
         # Disable the current connection
         originalConnection = config.neat_random.choice(enabledGenes)

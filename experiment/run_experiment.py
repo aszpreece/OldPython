@@ -26,7 +26,8 @@ def train_neat(base_genotype: Genotype, fitness_func, result_func=lambda neat: N
         reproduction=DefaultReproductionManager(),
         generation_size=150,
         mutation_manager=DefaultMutationManager(3, 3),
-        species_target=10
+        species_target=10,
+        species_mod=0.1,
     )
     neat = NEAT(config)
 

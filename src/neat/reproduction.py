@@ -7,12 +7,12 @@ from queue import PriorityQueue
 
 
 class ReproductionManager:
-    def reproduce(self, population, species, config: NeatConfig):
+    def reproduce(self, population, species, neat_config: NeatConfig):
         pass
 
 
 class DefaultReproductionManager(ReproductionManager):
-    def reproduce(self, population, species, config: NeatConfig):
+    def reproduce(self, population, species, neat_config: NeatConfig):
         """Create a new generation from the fitness scores of the previous generation
         """
         # Figure out the babies each species deserve
@@ -27,8 +27,7 @@ class DefaultReproductionManager(ReproductionManager):
             adjusted_fitness_of_species = s.get_species_fitness() / s.count()
 
             share = adjusted_fitness_of_species / average_fitness_per_species
-
-            share = (share * config.generation_size) / len(species)
+            share = (share * neat_config.generation_size) / len(species)
 
             babies_per_species.put((share, species_id))
 
@@ -45,27 +44,27 @@ class DefaultReproductionManager(ReproductionManager):
             babies_int = max(round(babies_float), 1)
 
             # Adjust if we have gone over the limit
-            if babies_given_out + babies_int > config.generation_size:
-                babies_int = config.generation_size - babies_given_out
+            if babies_given_out + babies_int > neat_config.generation_size:
+                babies_int = neat_config.generation_size - babies_given_out
 
             self.create_species_offspring(species[species_id],
-                                          babies_int, config, new_population)
+                                          babies_int, neat_config, new_population)
 
             babies_given_out += babies_int
 
         # Just give any remaining babies to the best species
-        if babies_given_out < config.generation_size:
-            babies_left = config.generation_size - babies_given_out
+        if babies_given_out < neat_config.generation_size:
+            babies_left = neat_config.generation_size - babies_given_out
             assert population.best_individual is not None and population.best_individual.species is not None
             self.create_species_offspring(
-                population.best_individual.species, babies_left, config, new_population)
+                population.best_individual.species, babies_left, neat_config, new_population)
             babies_given_out += babies_left
             print(f'babies left {babies_left}')
 
         population.population = new_population
-        assert babies_given_out == config.generation_size, 'Not given out enough babies'
+        assert babies_given_out == neat_config.generation_size, 'Not given out enough babies'
         assert len(
-            population.population) == config.generation_size, 'New generation size is incorrect'
+            population.population) == neat_config.generation_size, 'New generation size is incorrect'
 
     def create_species_offspring(self, species: Species, babies_allocated: int, config: NeatConfig, new_population) -> None:
 

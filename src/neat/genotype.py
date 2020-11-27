@@ -6,9 +6,6 @@ from typing import List, Optional
 from src.neat.phenotype import Phenotype
 
 
-calls = 0
-
-
 class NodeGene:
     innov_id: int
     type: NodeType
