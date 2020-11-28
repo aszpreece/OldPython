@@ -22,7 +22,7 @@ class NEAT:
         self.population = Population()
         self.species: Dict[int, Species] = {}
         self.species_index = 0
-        self.first_run = True
+        self.generation_num = 0
 
     def get_next_species_number(self):
         self.species_index += 1
@@ -34,7 +34,9 @@ class NEAT:
         Returns:
             Genotype: The genotype of the best performing member.
         """
-        if not self.first_run:
+
+        self.generation_num += 1
+        if self.generation_num != 1:
             self.config.mutation_manager.cycle()
             self.config.reproduction.reproduce(
                 self.population, self.species, self.config)
@@ -42,7 +44,6 @@ class NEAT:
             for i in range(self.config.generation_size):
                 genotype_copy = copy.deepcopy(self.config.base_genotype)
                 self.population.add_member(genotype_copy)
-            self.first_run = False
 
         self.adjust_compatibility()
         self.cycle_species()

@@ -18,96 +18,67 @@ import logging
 from typing import List, Tuple
 
 
-def train_neat(base_genotype: Genotype, fitness_func, result_func=lambda neat: None):
+def train_neat(fitness_func, config: NeatConfig, target_score, result_func=lambda neat: None):
 
-    probabilities = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
-    runs_per_prob = 30
+    neat = NEAT(config)
 
-    average_generations = []
+    plt.ion()
 
-    for probability in probabilities:
+    fig, axarr = plt.subplots(3, figsize=(6, 8))
+    plt.subplots_adjust(wspace=0.5, hspace=1)
+    fig.show()
 
-        total_gens = 0
-        for run in range(runs_per_prob):
+    error = []
+    complexity = []
+    species_count = []
 
-            config = NeatConfig(
-                activation_func=sigmoid,
-                fitness_function=fitness_func,
-                base_genotype=base_genotype,
-                reproduction=DefaultReproductionManager(),
-                generation_size=150,
-                mutation_manager=DefaultMutationManager(3, 3),
-                species_target=10,
-                species_mod=0.1,
-                prob_crossover=0.8,
-                weight_perturb_scale=1,
-                new_weight_power=0.8
-            )
+    score = 0
+    generation = 0
+    old_score = 0
 
-            neat = NEAT(config)
+    while score < target_score:
+        generation += 1
+        logging.debug(f'=====Generation {generation}=====')
+        solution = neat.run_generation()
+        score = solution.fitness
+        if solution != None:
+            if old_score != score:
+                print(f'Score for generation {generation} is {score}')
 
-            plt.ion()
+            neat.print_species()
 
-            fig, axarr = plt.subplots(3, figsize=(6, 8))
-            plt.subplots_adjust(wspace=0.5, hspace=1)
-            fig.show()
+            old_score = score
 
-            error = []
-            complexity = []
-            species_count = []
+            error.append(score)
+            complexity.append(solution.get_complexity())
 
-            score = 0
-            generation = 0
-            old_score = 0
+            axarr[0].clear()
+            axarr[0].set(title="Fitness",
+                         xlabel='Generation', ylabel='Fitness')
+            axarr[0].plot(error)
 
-            while score < 1320:
-                generation += 1
-                logging.debug(f'=====Generation {generation}=====')
-                solution = neat.run_generation()
-                score = solution.fitness
-                if solution != None:
-                    if old_score != score:
-                        print(f'Score for generation {generation} is {score}')
+            axarr[1].clear()
+            axarr[1].set(title="Complexity",
+                         xlabel='Generation', ylabel='Count')
+            axarr[1].plot(complexity)
+            axarr[1].legend(
+                ["Nodes", "Connections", "Enabled Connections"])
 
-                    neat.print_species()
+            species_count.append(len(neat.species))
 
-                    old_score = score
+            axarr[2].clear()
+            axarr[2].set(title="Species",
+                         xlabel='Generation', ylabel='Count')
+            axarr[2].plot(species_count)
+            axarr[2].legend(["Species"])
 
-                    error.append(score)
-                    complexity.append(solution.get_complexity())
+            result_func(neat)
 
-                    axarr[0].clear()
-                    axarr[0].set(title="Fitness",
-                                 xlabel='Generation', ylabel='Fitness')
-                    axarr[0].plot(error)
+            fig.canvas.draw()
+            plt.pause(0.01)
 
-                    axarr[1].clear()
-                    axarr[1].set(title="Complexity",
-                                 xlabel='Generation', ylabel='Count')
-                    axarr[1].plot(complexity)
-                    axarr[1].legend(
-                        ["Nodes", "Connections", "Enabled Connections"])
+    print(f'Generations: {generation}')
 
-                    species_count.append(len(neat.species))
-
-                    axarr[2].clear()
-                    axarr[2].set(title="Species",
-                                 xlabel='Generation', ylabel='Count')
-                    axarr[2].plot(species_count)
-                    axarr[2].legend(["Species"])
-
-                    result_func(neat)
-
-                    fig.canvas.draw()
-                    plt.pause(0.01)
-
-            print(f'Generations: {generation}')
-            total_gens += generation
-
-        average_generations.append(total_gens / runs_per_prob)
-
-    plt.plot(probabilities, average_generations)
-    input()
     print('Neat!')
 
 

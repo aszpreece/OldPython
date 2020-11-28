@@ -1,4 +1,7 @@
 
+from src.neat.mutate import DefaultMutationManager
+from src.neat.reproduction import DefaultReproductionManager
+from src.neat.neat_config import NeatConfig
 from matplotlib.pyplot import axis
 from experiment.run_experiment import train_neat
 import random
@@ -8,7 +11,7 @@ from typing import List, Tuple
 from matplotlib import pyplot as plt
 from src.neat.neat import NEAT
 from src.neat.phenotype import Phenotype
-from src.neat.genotype import ConnectionGene, Genotype, NodeGene, NodeType, identity
+from src.neat.genotype import ConnectionGene, Genotype, NodeGene, NodeType, identity, sigmoid
 from src.ui.graphnetwork import create_graph
 import numpy as np
 
@@ -107,4 +110,19 @@ def fitness_function_sin(genotype: Genotype) -> float:
     return 1 / (((1/len(test_cases)) * score))
 
 
-train_neat(base_genotype, fitness_function_sin, plot_sin)
+config = NeatConfig(
+    activation_func=sigmoid,
+    fitness_function=fitness_function_sin,
+    base_genotype=base_genotype,
+    reproduction=DefaultReproductionManager(),
+    generation_size=150,
+    mutation_manager=DefaultMutationManager(3, 3),
+    species_target=10,
+    species_mod=0.1,
+    prob_crossover=0.8,
+    weight_perturb_scale=1,
+    new_weight_power=0.8
+)
+
+
+train_neat(fitness_function_sin, config, 1320, plot_sin)

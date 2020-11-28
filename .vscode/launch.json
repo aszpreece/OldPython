@@ -17,6 +17,12 @@
             "module": "experiment.sin"
         },
         {
+            "name": "Bird Test",
+            "type": "python",
+            "request": "launch",
+            "module": "experiment.flappy_swarm"
+        },
+        {
             "name": "Test UI",
             "type": "python",
             "request": "launch",
