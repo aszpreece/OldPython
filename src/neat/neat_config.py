@@ -1,17 +1,19 @@
 from random import Random
+from src.neat.genotype import sigmoid
 
 
 class NeatConfig():
 
     def __init__(self,
+                 activation_func,
                  fitness_function,
                  base_genotype,
                  mutation_manager,
                  reproduction,
                  prob_to_mutate_weights=0.8,
-                 weight_perturb_scale=0.45,
+                 weight_perturb_scale=1,
                  prob_perturbing_weights=0.95,
-                 new_weight_power=1.2,
+                 new_weight_power=4,
                  prob_to_split_connection=0.03,
                  prob_to_connect_nodes=0.05,
                  generation_size=150,
@@ -23,7 +25,11 @@ class NeatConfig():
                  species_target=None,
                  species_mod=0.3,
                  species_stag_thresh=20,
-                 neat_random=Random()
+                 neat_random=Random(),
+                 allow_recurrence=False,
+                 prob_inherit_from_fitter=0.5,
+                 prob_crossover=0.0,
+                 weight_random_type='gaussian'
                  ):
 
         self.reproduction = reproduction
@@ -55,3 +61,21 @@ class NeatConfig():
         self.species_target = species_target
         self.species_mod = species_mod
         self.species_stag_thresh = species_stag_thresh
+
+        self.allow_recurrence = allow_recurrence
+
+        # Probability of inheriting a matching gene from the fitter parent vs the less fitter
+        self.prob_inherit_from_fitter = prob_inherit_from_fitter
+        self.prob_crossover = prob_crossover
+
+        self.activation_func = activation_func
+
+        self.weight_random_type = weight_random_type
+
+    def get_weight_delta(self) -> float:
+        if self.weight_random_type == 'uniform':
+            return self.neat_random.uniform(-1, 1)
+        elif self.weight_random_type == 'gaussian':
+            return self.neat_random.gauss(0, 0.4)
+        else:
+            raise Exception('Invalid weight_random_type')

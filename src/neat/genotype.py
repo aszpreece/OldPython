@@ -1,18 +1,39 @@
 from __future__ import annotations
+from collections import deque
 
 import copy
+import math
 from src.neat.node_type import NodeType
-from typing import List, Optional
+from typing import Deque, List, Optional, Set
 from src.neat.phenotype import Phenotype
+
+
+def relu(x: float) -> float:
+    if x < 0:
+        return 0
+    else:
+        return x
+
+
+def sigmoid(x: float) -> float:
+    return 1/(1+math.exp(-x))
+
+
+def mod_sigmoid(x: float) -> float:
+    return 2/(1+math.exp(-x)) - 1
+
+
+def identity(x: float): return x
 
 
 class NodeGene:
     innov_id: int
     type: NodeType
 
-    def __init__(self, innov_id: int, type: NodeType) -> None:
+    def __init__(self, innov_id: int, type: NodeType, activation_func=sigmoid) -> None:
         self.type = type
         self.innov_id = innov_id
+        self.activation_func = activation_func
 
 
 class ConnectionGene:
@@ -21,13 +42,15 @@ class ConnectionGene:
     weight: float
     innov_id: int
     enabled: bool
+    recurrent: bool
 
-    def __init__(self, innov_id: int, source: int, to: int, weight: float, enabled=True) -> None:
+    def __init__(self, innov_id: int, source: int, to: int, weight: float, enabled=True, recurrent=False) -> None:
         self.source = source
         self.to = to
         self.weight = weight
         self.innov_id = innov_id
         self.enabled = enabled
+        self.recurrent = recurrent
 
 
 class Genotype:
@@ -40,7 +63,6 @@ class Genotype:
     # species: "optional[genotype]"
     fitness: float
     adjusted_fitness: float
-    phenotype: Optional[Phenotype]
 
     def __init__(self) -> None:
         self.connection_genes = []
@@ -49,8 +71,6 @@ class Genotype:
         self.conn_innov_start = 0
         self.fitness = 0
         self.adjusted_fitness = 0
-        # self.species = None
-        self.phenotype = None
 
     def get_enabled_connections_count(self):
         def enabled_genes_filter(gene: ConnectionGene) -> bool:
@@ -64,13 +84,43 @@ class Genotype:
     def copy(self) -> Genotype:
         species = self.species
         self.species = None
-        phenotype = self.phenotype
         self.phenotype = None
-
         c = copy.deepcopy(self)
-
-        c.phenotype = phenotype
-
-        self.phenotype = phenotype
         self.species = species
         return c
+
+    def creates_cycle(self, connection: ConnectionGene):
+
+        if (connection.source == connection.to):
+            return True
+
+        visited_set: Set[int] = set()
+        stack: Deque[int] = deque()
+
+        stack.append(connection.source)
+
+        target = connection.to
+
+        connection_dict = {}
+        for gene in self.connection_genes:
+            if not gene.recurrent and gene.enabled:
+                connection_dict.setdefault(gene.to, []).append(gene.source)
+
+        # Figure out if there is a cycle by traversing the neuron connections
+        # in reverse starting from the node this connection connects 'from' and attempt to find
+        # a route back to it whilst avoiding previously introduced recurrent connections
+        while (len(stack) != 0):
+            node = stack.pop()
+            visited_set.add(node)
+
+            for source in connection_dict.get(node, []):
+                # check if we have found the target
+                if source == target:
+                    return True
+                # Avoid nodes we have already visited
+                if source in visited_set:
+                    continue
+
+                stack.append(source)
+
+        return False

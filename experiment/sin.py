@@ -8,7 +8,7 @@ from typing import List, Tuple
 from matplotlib import pyplot as plt
 from src.neat.neat import NEAT
 from src.neat.phenotype import Phenotype
-from src.neat.genotype import ConnectionGene, Genotype, NodeGene, NodeType
+from src.neat.genotype import ConnectionGene, Genotype, NodeGene, NodeType, identity
 from src.ui.graphnetwork import create_graph
 import numpy as np
 
@@ -22,11 +22,11 @@ base_genotype = Genotype()
 base_genotype.node_genes = [
     NodeGene(0, NodeType.BIAS),
     NodeGene(1, NodeType.INPUT),
-    NodeGene(2, NodeType.OUTPUT)
+    NodeGene(2, NodeType.OUTPUT, activation_func=identity)
 ]
 
 base_genotype.connection_genes = [
-    ConnectionGene(1, 1, 2, 1.0),
+    ConnectionGene(1, 1, 2, -1.0),
 ]
 
 base_genotype.conn_innov_start = 1
@@ -38,7 +38,7 @@ def radian_to_scalar(r):
 
 
 def scalar_to_output(s):
-    return 2 * (s - 0.5)
+    return s
 
 
 plt.ion()
@@ -55,8 +55,16 @@ def plot_sin(neat: NEAT):
         results = []
         expected = []
         for x in np.linspace(-1 * math.pi, 1 * math.pi, 100):
+            for i in range(1, 10):
+                phenotype.calculate({
+                    0: 1, 1: radian_to_scalar(x)
+                })[2]
+
+            phenotype.calculate({
+                0: 1, 1: radian_to_scalar(x)
+            })[2]
             xs.append(x)
-            result = phenotype.calculate_no_rec({
+            result = phenotype.calculate({
                 0: 1, 1: radian_to_scalar(x)  # Normalize input
             })[2]
             expected.append(math.sin(x))
@@ -82,7 +90,12 @@ def fitness_function_sin(genotype: Genotype) -> float:
 
     phenotype = Phenotype(genotype)
     for x, expected in test_cases:
-        result = phenotype.calculate_no_rec({
+        for i in range(1, 10):
+            phenotype.calculate({
+                0: 1, 1: radian_to_scalar(x)
+            })
+
+        result = phenotype.calculate({
             0: 1, 1: radian_to_scalar(x)
         })[2]
 

@@ -1,4 +1,5 @@
 
+import copy
 from src.neat.neat import NEAT
 from typing import Dict, Optional, Tuple
 from src.neat.node_type import NodeType
@@ -64,11 +65,10 @@ class DefaultMutationManager(MutationManager):
 
             if config.neat_random.uniform(0, 1) < config.prob_perturbing_weights:
                 # Perturb the weights
-                connection_gene.weight += config.neat_random.uniform(-1, 1) * \
+                connection_gene.weight += config.get_weight_delta() * \
                     config.weight_perturb_scale
             else:
-                connection_gene.weight = config.neat_random.uniform(
-                    -1, 1) * config.new_weight_power
+                connection_gene.weight = config.get_weight_delta() * config.new_weight_power
 
     def split_connection_mutate(self, genotype: Genotype, config: NeatConfig) -> None:
         """Given a genotype, split a random connection and add an intermediate node.
@@ -102,8 +102,8 @@ class DefaultMutationManager(MutationManager):
 
         if not innovation_ids_tuple == None:
             node_innov_id, from_innov_id, to_innov_id = innovation_ids_tuple
-            logging.debug(
-                'Split node has happened before this generation. Using old innovation numbers.')
+            # logging.debug(
+            #    'Split node has happened before this generation. Using old innovation numbers.')
 
         else:
             node_innov_id = self.get_next_node_innov_num()
@@ -115,7 +115,7 @@ class DefaultMutationManager(MutationManager):
 
         # Create a new node with a the innovation number
         genotype.node_genes.append(NodeGene(node_innov_id,
-                                            NodeType.HIDDEN))
+                                            NodeType.HIDDEN, activation_func=config.activation_func))
 
         # New connection from old source to new node with weight of 1.0 to reduce impact
         genotype.connection_genes.append(ConnectionGene(
@@ -150,7 +150,7 @@ class DefaultMutationManager(MutationManager):
             (genotype.node_genes[i].innov_id, None) for i in indexes if genotype.node_genes[i].type != NodeType.INPUT and genotype.node_genes[i].type != NodeType.BIAS)
 
         # The pair we have found
-        pair: "Optional[Tuple[int, int]]" = None
+        proposed_gene: "Optional[ConnectionGene]" = None
 
         re_enabled_flag = False
 
@@ -163,24 +163,39 @@ class DefaultMutationManager(MutationManager):
                 # Looping through the second list, check whether or not the second node is already connected to the first node (in the same direction)
                 connection = conns_from_first.get(second, None)
                 # If there is no connection gene at all there won't be an entry in the hash table and it will rteurn Nome
-                if connection == None or connection.enabled == False:
-                    pair = (first, second)
+                if connection == None:
+                    proposed_gene = ConnectionGene(
+                        self.connection_innovation_number + 1, first, second, config.get_weight_delta() * config.new_weight_power)
+                    # Check if we can create this connection
+                    cycle = genotype.creates_cycle(proposed_gene)
+                    if cycle:
+                        if not config.allow_recurrence:
+                            proposed_gene = None
+                            continue
+                        else:
+                            proposed_gene.recurrent = True
                     break
 
                 # If there is a disabled connection we should re enable it TODO is this okay?
                 elif connection.enabled == False:
-                    # Flag that we have re enabled a gene
-                    re_enabled_flag = True
-                    connection.enabled = True
-                    break
+                    # Check if re enabling this gene would cause a cycle
+
+                    # Check if we can re enable this connection without causing a cycle
+                    if not config.allow_recurrence and genotype.creates_cycle(connection):
+                        continue
+                    else:
+                        # Flag that we have re enabled a gene
+                        re_enabled_flag = True
+                        connection.enabled = True
+                        break
 
             else:
                 # If this node is connected to everything then we cannot connect it to a new node and we must select a new 'first node
                 continue
             break
 
-        if pair == None:
-            # If we didn't
+        if proposed_gene == None:
+            # Check if we re-enabled a connection instead
             if re_enabled_flag == False:
                 # TODO
                 # Unlikely (Famous last words), but we cannot do this mutation. We should log it
@@ -190,14 +205,74 @@ class DefaultMutationManager(MutationManager):
             return
 
         # Get new innov_id, either by checking if this mutation has happened before in this generation, or by getting a new one
-        innov_id = self.new_conn_signatures.get(pair)
+        signature = proposed_gene.source, proposed_gene.to
+
+        innov_id = self.new_conn_signatures.get(signature)
 
         if innov_id == None:
             innov_id = self.get_next_conn_innov_num()
-            self.new_conn_signatures[pair] = innov_id
-        else:
-            logging.debug(
-                'Connection mutation has happened before this generation. Using old innovation number.')
+            self.new_conn_signatures[signature] = innov_id
+        # else:
+        #     logging.debug(
+        #         'Connection mutation has happened before this generation. Using old innovation number.')
 
-        genotype.connection_genes.append(
-            ConnectionGene(innov_id, pair[0], pair[1], config.neat_random.uniform(-1, 1) * config.new_weight_power))
+        proposed_gene.innov_id = innov_id
+
+        genotype.connection_genes.append(proposed_gene)
+
+    def crossover(self, g1: Genotype, g2: Genotype, config: NeatConfig) -> Genotype:
+
+        fittest: Optional[Genotype] = None
+        not_fittest: Optional[Genotype] = None
+
+        if g1.fitness > g2.fitness:
+            fittest = g1
+            not_fittest = g2
+        elif g1.fitness < g2.fitness:
+            fittest = g2
+            not_fittest = g1
+        # If they match just pick one randomly
+        else:
+            if config.neat_random.random() < 0.5:
+                fittest = g2
+                not_fittest = g1
+            else:
+                fittest = g1
+                not_fittest = g2
+
+        baby = Genotype()
+
+        baby.node_genes = copy.deepcopy(fittest.node_genes)
+
+        fit_index = 0
+        nfit_index = 0
+
+        while fit_index < len(fittest.connection_genes) and nfit_index < len(not_fittest.connection_genes):
+            fit_gene = fittest.connection_genes[fit_index]
+            nfit_gene = fittest.connection_genes[nfit_index]
+
+            if fit_gene.innov_id == nfit_gene.innov_id:
+                # If they match inherit randomly
+                if config.neat_random.random() < config.prob_inherit_from_fitter:
+                    baby.connection_genes.append(copy.deepcopy(fit_gene))
+                else:
+                    baby.connection_genes.append(copy.deepcopy(nfit_gene))
+
+                fit_index += 1
+                nfit_index += 1
+            elif fit_gene.innov_id > nfit_gene.innov_id:
+                # Don't allow less fit parent to add extra genes
+                nfit_index += 1
+                continue
+            elif fit_gene.innov_id < nfit_gene.innov_id:
+                fit_index += 1
+                # If this is a disjoint gene that the fitter parent has, add it.
+                baby.connection_genes.append(copy.deepcopy(fit_gene))
+
+        # Add remaining excess genes from fitter
+        while fit_index < len(fittest.connection_genes):
+            fit_gene = fittest.connection_genes[fit_index]
+            baby.connection_genes.append(copy.deepcopy(fit_gene))
+            fit_index += 1
+
+        return baby

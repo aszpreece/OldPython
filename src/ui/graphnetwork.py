@@ -11,7 +11,9 @@ def create_graph(genome: Genotype):
     node_cols = {
         NodeType.INPUT: {"color": "blue"},
         NodeType.HIDDEN: {"color": "green"},
-        NodeType.OUTPUT: {"color": "red"}
+        NodeType.OUTPUT: {"color": "red"},
+        NodeType.BIAS: {"color": "blue"},
+
     }
 
     G.add_nodes_from([(node.innov_id, node_cols[node.type])

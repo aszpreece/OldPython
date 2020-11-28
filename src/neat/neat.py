@@ -105,8 +105,16 @@ class NEAT:
         extinct: List[int] = []
         for species_id, species in self.species.items():
             if len(species.members) == 0:
-                logging.info(f'Species {species.species_id} has died out')
+                logging.info(
+                    f'Species {species.species_id} has died out at age {species.age}')
                 extinct.append(species.species_id)
 
         for species_id in extinct:
             del self.species[species_id]
+
+    def print_species(self):
+        if len(self.species) == 0:
+            logging.debug(f'NO SPECIES')
+        for species_id, species in self.species.items():
+            logging.debug(
+                f'SPECIES {species_id} SIZE: {species.count()} AGE: {species.age} STAGNANT: {species.cycles_since_improvement}')

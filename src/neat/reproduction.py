@@ -3,7 +3,7 @@ from src.neat.species import Species
 from src.neat.neat_config import NeatConfig
 from src.neat.genotype import Genotype
 from typing import List, Tuple
-from queue import PriorityQueue
+from src.queue.reversible_queue import DualPriorityQueue
 
 
 class ReproductionManager:
@@ -17,40 +17,63 @@ class DefaultReproductionManager(ReproductionManager):
         """
         # Figure out the babies each species deserve
         # (Total Adjusted Fitness in species) / (Average species fitness)
-        babies_per_species: PriorityQueue[Tuple[float, int]] = PriorityQueue(
-            len(species))
+        babies_per_species = DualPriorityQueue(
+            len(species), True)
 
-        average_fitness_per_species = population.total_adjusted_fitness / \
-            len(species)
+        fitness_of_remaining_species = 0
+        remaining_species = 0
 
         for species_id, s in species.items():
-            adjusted_fitness_of_species = s.get_species_fitness() / s.count()
 
-            share = adjusted_fitness_of_species / average_fitness_per_species
-            share = (share * neat_config.generation_size) / len(species)
+            total, maximum = s.get_total_and_max_fitness()
 
-            babies_per_species.put((share, species_id))
+            if maximum > s.best_score:
+                s.best_score = maximum
+                s.cycles_since_improvement = 0
+            else:
+                s.cycles_since_improvement += 1
+
+            if s.cycles_since_improvement < neat_config.species_stag_thresh:
+                adjusted_fitness_of_species = total / s.count()
+                fitness_of_remaining_species += adjusted_fitness_of_species
+                remaining_species += 1
+                babies_per_species.put(
+                    adjusted_fitness_of_species, species_id)
+            else:
+                logging.debug(f'Species {species_id} has stagnated')
 
         babies_given_out = 0
-
         new_population: List[Genotype] = []
-        # Copy across best individual unmodified
-        assert population.best_individual is not None and population.best_individual.species is not None
-        new_population.append(population.best_individual.copy())
-        babies_given_out += 1
 
-        while len(babies_per_species.queue) > 0:
-            babies_float, species_id = babies_per_species.get()
-            babies_int = max(round(babies_float), 1)
+        if not remaining_species == 0:
 
-            # Adjust if we have gone over the limit
-            if babies_given_out + babies_int > neat_config.generation_size:
-                babies_int = neat_config.generation_size - babies_given_out
+            average_fitness_per_species = fitness_of_remaining_species / \
+                remaining_species
 
-            self.create_species_offspring(species[species_id],
-                                          babies_int, neat_config, new_population)
+            # Copy across best individual unmodified
+            assert population.best_individual is not None and population.best_individual.species is not None
+            new_population.append(population.best_individual.copy())
+            babies_given_out += 1
 
-            babies_given_out += babies_int
+            while len(babies_per_species.queue) > 0:
+                adjusted_fitness, species_id = babies_per_species.get()
+                share = adjusted_fitness / average_fitness_per_species
+                share = (share * neat_config.generation_size) / \
+                    remaining_species
+
+                babies_int = max(round(share), 1)
+
+                logging.debug(
+                    f'Babies for species {species_id}: {babies_int}: TAF: {adjusted_fitness}')
+
+                # Adjust if we have gone over the limit
+                if babies_given_out + babies_int > neat_config.generation_size:
+                    babies_int = neat_config.generation_size - babies_given_out
+
+                self.create_species_offspring(species[species_id],
+                                              babies_int, neat_config, new_population)
+
+                babies_given_out += babies_int
 
         # Just give any remaining babies to the best species
         if babies_given_out < neat_config.generation_size:
@@ -68,7 +91,8 @@ class DefaultReproductionManager(ReproductionManager):
 
     def create_species_offspring(self, species: Species, babies_allocated: int, config: NeatConfig, new_population) -> None:
 
-        average_fitness = species.get_species_fitness() / species.count()
+        average_fitness = species.get_total_and_max_fitness()[
+            0] / species.count()
 
         fit_members_count = 0
         fittest_members: List[Genotype] = []
@@ -90,16 +114,23 @@ class DefaultReproductionManager(ReproductionManager):
         assert fit_members_count > 0, 'No fit members of species/ species is empty!'
 
         babies_made = 0
-        if babies_allocated > 6:
-            babies_made += 1
-            logging.debug(
-                f'Copying across unmodified member of species {species.species_id}')
-            new_population.append(fittest_members[0].copy())
+        # if babies_allocated > 6:
+        #     babies_made += 1
+        #     logging.debug(
+        #         f'Copying across unmodified member of species {species.species_id}')
+        #     new_population.append(fittest_members[0].copy())
 
         i = 0
         while babies_made < babies_allocated:
             i = i % len(fittest_members)
             baby = fittest_members[i].copy()
+            # Decide whether to crossover or not
+            if config.neat_random.random() < config.prob_crossover:
+                father = baby
+                mother = config.neat_random.choice(fittest_members).copy()
+                baby = config.mutation_manager.crossover(
+                    father, mother, config)
+
             config.mutation_manager.mutate(baby, config)
             new_population.append(baby)
             babies_made += 1

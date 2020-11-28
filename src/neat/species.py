@@ -16,6 +16,7 @@ class Species:
         self.species_id = species_id
         self.age: int = 0
         self.cycles_since_improvement = 0
+        self.best_score = -math.inf
 
     def count(self):
         """Get the amount of members a species has
@@ -25,14 +26,20 @@ class Species:
         """
         return len(self.members)
 
-    def get_species_fitness(self) -> float:
+    def get_total_and_max_fitness(self) -> Tuple[float, float]:
+        """Gets the total fitness of the species and the bets fitness withtin the species
 
-        max_fitness = None
+        Returns:
+            Tuple[float, float]: Total fitness and max fitness
+        """
+        max_fitness = -math.inf
         species_fitness_sum = 0
         for species_member in self.members:
             species_fitness_sum += species_member.fitness
+            if species_member.fitness > max_fitness:
+                max_fitness = species_member.fitness
 
-        return species_fitness_sum
+        return species_fitness_sum, max_fitness
 
     def cycle(self, rand: Random):
 
