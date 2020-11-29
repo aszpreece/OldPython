@@ -87,6 +87,10 @@ class DefaultMutationManager(MutationManager):
         # Fix: no longer tries to split disabled genes
         enabledGenes = list(filter(lambda conn: conn.enabled,
                                    genotype.connection_genes))
+        # Fix: check if no connections
+
+        if len(enabledGenes) == 0:
+            return
 
         # Disable the current connection
         originalConnection = config.neat_random.choice(enabledGenes)

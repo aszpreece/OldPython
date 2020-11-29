@@ -4,6 +4,7 @@
 # Version 2:
 # Birds not told distance to next obstacle. requiring memory
 
+import logging
 from src.neat.neat import NEAT
 from experiment.run_experiment import train_neat
 import random
@@ -42,7 +43,7 @@ class Bird:
         self.y = y
         self.brain = brain
         self.alive = True
-        self.speed = 1
+        self.speed = 0.7
 
     def get_movement(self) -> float:
         return self.brain.get_movement() * self.speed
@@ -59,8 +60,8 @@ class FlappySwarm:
     def __init__(self, bird_brains):
 
         self.arena_height = 20.0
-        self.opening_size = 4.0
-        self.obstacle_distance: int = 50
+        self.opening_size = 2.0
+        self.obstacle_distance: int = 25
 
         self.obstacle_x = self.obstacle_distance
         # Y pos of the top of the opening
@@ -106,8 +107,15 @@ class FlappySwarm:
         # Get the movement for the bird
         for bird in self.birds:
             new_pos = bird.y + bird.get_movement()
+            # if new_pos < 0 or new_pos > self.arena_height:
+            #     # Kill birds that hit the ground or fly too high
+            #     bird.alive = False
+
             new_pos = max(0, min(new_pos, self.arena_height))
             bird.y = new_pos
+
+        # Filter out dead birds
+        self.birds = list(filter(lambda bird: bird.alive, self.birds))
 
         if self.obstacle_x == 0:
             # Do the collision checking
@@ -133,7 +141,7 @@ class FlappySwarm:
 def visualize(instance: FlappySwarm) -> None:
     pygame.init()
     screen = pygame.display.set_mode((800, 600))
-    pygame.display.set_caption('Flappy Swarm')
+    pygame.display.set_caption('Those chickens are up to something!')
 
     scale = 20.0  # 600 / instance.arena_height
 
@@ -222,13 +230,19 @@ class NeatBirdBrain(BirdBrain):
 
 def bird_fitness(genotype: Genotype):
     # Create a bunch of bird brains and put them in a simulation
-    brains = [NeatBirdBrain(genotype) for i in range(6)]
-    simulation = FlappySwarm(brains)
 
-    while len(simulation.birds) > 2:
-        simulation.update()
+    n = 3
+    score_total = 0
+    for i in range(n):
+        brains = [NeatBirdBrain(genotype) for i in range(6)]
+        simulation = FlappySwarm(brains)
 
-    return simulation.score
+        while len(simulation.birds) > 3:
+            simulation.update()
+
+        score_total += simulation.score
+
+    return score_total / n
 
 
 def result_func(neat: NEAT):
@@ -253,4 +267,5 @@ config = NeatConfig(
     new_weight_power=0.8
 )
 
+logging.basicConfig(level=logging.NOTSET)
 train_neat(bird_fitness, config, 1320, result_func=result_func)

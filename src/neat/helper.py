@@ -57,7 +57,7 @@ def compare_connection_genes(genes1: List[ConnectionGene], genes2: List[Connecti
     excess_genes = (gen1_genes_count - gen1_index) + \
         (gen2_genes_count - gen2_index)
 
-    return (disjoint_genes, excess_genes, weight_diff_count / shared_connections)
+    return (disjoint_genes, excess_genes, weight_diff_count / max(1, shared_connections))
 
 
 def compare_node_genes(genes1: List[NodeGene], genes2: List[NodeGene]) -> Tuple[int, int]:
