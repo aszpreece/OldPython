@@ -32,7 +32,7 @@ class BirdBrain:
         pass
 
     @abc.abstractmethod
-    def update(self, above_sound, below_sound, obst_in_front, obst_dist=0) -> None:
+    def update(self, above_sound, below_sound, obst_in_front, dist_below, dist_above, obst_dist=0) -> None:
         pass
 
 
@@ -50,8 +50,9 @@ class Bird:
     def get_sound(self) -> float:
         return self.brain.get_sound()
 
-    def update(self, above_sound, below_sound, obst_in_front, obst_dist=0) -> None:
-        self.brain.update(above_sound, below_sound, obst_in_front, obst_dist)
+    def update(self, above_sound, below_sound, obst_in_front, dist_below, dist_above, obst_dist=0) -> None:
+        self.brain.update(above_sound, below_sound,
+                          obst_in_front, dist_below, dist_above, obst_dist)
 
 
 class FlappySwarm:
@@ -60,7 +61,7 @@ class FlappySwarm:
 
         self.arena_height = 20.0
         self.opening_size = 4.0
-        self.obstacle_distance: int = 50
+        self.obstacle_distance: int = 30
 
         self.obstacle_x = self.obstacle_distance
         # Y pos of the top of the opening
@@ -71,6 +72,7 @@ class FlappySwarm:
             np.linspace(0, self.arena_height, len(bird_brains)))]
 
         self.score = 0
+        self.obstacles_cleared = 0
 
     def randomize_obstacle(self):
         self.obstacle_x = self.obstacle_distance
@@ -93,21 +95,36 @@ class FlappySwarm:
             total_sound += bird.get_sound()
 
         sound_above = 0
-        for bird in self.birds:
+        prev_y = 0
+        for index, bird in enumerate(self.birds):
             my_sound = bird.get_sound()
 
             sound_below = total_sound - sound_above - my_sound
 
+            dist_above = (bird.y - prev_y) / self.arena_height
+
+            next_y = self.arena_height
+            if index + 1 < len(self.birds):
+                next_y = self.birds[index + 1].y
+
+            dist_below = (next_y - bird.y) / self.arena_height
+
             bird.update(sound_above / len(self.birds), sound_below /
-                        len(self.birds), self.collision_course(bird), self.obstacle_x / self.obstacle_distance)
+                        len(self.birds), self.collision_course(bird), dist_below, dist_above, self.obstacle_x / self.obstacle_distance)
 
             sound_above += my_sound
 
         # Get the movement for the bird
         for bird in self.birds:
             new_pos = bird.y + bird.get_movement()
-            new_pos = max(0, min(new_pos, self.arena_height))
+
+            if new_pos < 0 or new_pos > self.arena_height:
+                bird.alive = False
+            # new_pos = max(0, min(new_pos, self.arena_height))
             bird.y = new_pos
+
+        # Filter out dead birds
+        self.birds = list(filter(lambda bird: bird.alive, self.birds))
 
         if self.obstacle_x == 0:
             # Do the collision checking
@@ -123,8 +140,9 @@ class FlappySwarm:
             self.score += len(self.birds)
 
             self.randomize_obstacle()
-
-        self.obstacle_x -= 1
+            self.obstacles_cleared += 1
+        else:
+            self.obstacle_x -= 1
 
     def all_dead(self):
         return True if len(self.birds) == 0 else False
@@ -177,7 +195,9 @@ bird_base.node_genes = [
     # Movement of bird
     NodeGene(5, NodeType.OUTPUT, activation_func=mod_sigmoid),
     # Sound from bird
-    NodeGene(6, NodeType.OUTPUT, activation_func=sigmoid)
+    NodeGene(6, NodeType.OUTPUT, activation_func=sigmoid),
+    NodeGene(7, NodeType.INPUT),  # Dist below
+    NodeGene(8, NodeType.INPUT),  # Dist above
 ]
 
 # Set up perceptron
@@ -193,10 +213,13 @@ bird_base.connection_genes = [
     ConnectionGene(7, 3, 6, 0),
     ConnectionGene(8, 4, 6, 0),
     ConnectionGene(9, 5, 6, 0),
+
+    ConnectionGene(10, 7, 5, 0),
+    ConnectionGene(11, 8, 6, 0),
 ]
 
-bird_base.conn_innov_start = 9
-bird_base.node_innov_start = 6
+bird_base.conn_innov_start = 11
+bird_base.node_innov_start = 8
 
 
 class NeatBirdBrain(BirdBrain):
@@ -210,13 +233,15 @@ class NeatBirdBrain(BirdBrain):
     def get_sound(self) -> float:
         return self.phenotype.node_activations.get(6, 0)
 
-    def update(self, above_sound, below_sound, obst_in_front, obst_dist=0) -> None:
+    def update(self, above_sound, below_sound, obst_in_front, dist_below, dist_above, obst_dist=0) -> None:
         self.phenotype.calculate({
             0: 1,
             1: obst_in_front,
             2: above_sound,
             3: below_sound,
-            4: obst_dist
+            4: obst_dist,
+            7: dist_below,
+            8: dist_above
         })
 
 
@@ -225,7 +250,7 @@ def bird_fitness(genotype: Genotype):
     brains = [NeatBirdBrain(genotype) for i in range(6)]
     simulation = FlappySwarm(brains)
 
-    while len(simulation.birds) > 2:
+    while len(simulation.birds) > 2 and simulation.obstacles_cleared < 30:
         simulation.update()
 
     return simulation.score
