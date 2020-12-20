@@ -55,7 +55,7 @@ class FlappySwarm:
         self.arena_height = 20.0
         self.opening_size = 3.0
         self.obstacle_distance: int = 30
-        self.obstacle_speed = 0.4
+        self.obstacle_speed = 0.5
 
         self.obstacle_x = self.obstacle_distance
         # Y pos of the top of the opening
@@ -71,6 +71,8 @@ class FlappySwarm:
         self.obstacles_cleared = 0
 
         self.moving_obstacle = False
+        self.kill_on_edge = True
+        self.bird_edge_crashes = 0
 
     def randomize_obstacle(self):
         self.obstacle_x = self.obstacle_distance
@@ -128,9 +130,12 @@ class FlappySwarm:
         for bird in self.birds:
             new_pos = bird.y + bird.get_movement()
 
-            if new_pos < 0 or new_pos > self.arena_height:
+            if self.kill_on_edge and (new_pos < 0 or new_pos > self.arena_height):
                 bird.alive = False
-            # new_pos = max(0, min(new_pos, self.arena_height))
+                self.bird_edge_crashes += 1
+            else:
+                new_pos = max(0, min(new_pos, self.arena_height))
+
             bird.y = new_pos
 
         # Filter out dead birds
@@ -162,6 +167,7 @@ class FlappySwarm:
 
 def visualize(instance: FlappySwarm) -> None:
     pygame.init()
+
     screen = pygame.display.set_mode((800, 600))
     pygame.display.set_caption('Those chickens are up to something!')
 
@@ -192,3 +198,5 @@ def visualize(instance: FlappySwarm) -> None:
         pygame.time.delay(200)  # 1 second == 1000 milliseconds
 
         instance.update()
+
+    pygame.quit()

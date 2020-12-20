@@ -20,7 +20,7 @@
             "name": "Bird Test",
             "type": "python",
             "request": "launch",
-            "module": "experiment.flappy_swarm.flappy_swarm"
+            "module": "experiment.flappy_swarm.experiment"
         },
         {
             "name": "Test UI",

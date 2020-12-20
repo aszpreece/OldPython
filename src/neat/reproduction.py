@@ -47,8 +47,8 @@ class DefaultReproductionManager(ReproductionManager):
 
         if not remaining_species == 0:
 
-            average_fitness_per_species = fitness_of_remaining_species / \
-                remaining_species
+            average_fitness_per_species = max(fitness_of_remaining_species /
+                                              remaining_species, 0.001)
 
             # Copy across best individual unmodified
             assert population.best_individual is not None and population.best_individual.species is not None

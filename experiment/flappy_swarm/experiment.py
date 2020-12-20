@@ -1,24 +1,34 @@
 
+from operator import mod
 from src.neat.neat import NEAT
 from experiment.run_experiment import train_neat
 from src.neat.mutate import DefaultMutationManager
 from src.neat.reproduction import DefaultReproductionManager
 from experiment.flappy_swarm.flappy_swarm import BirdBrain, FlappySwarm, visualize
 from src.neat.node_type import NodeType
-from src.neat.genotype import Genotype, NodeGene, mod_sigmoid, sigmoid
+from src.neat.genotype import ConnectionGene, Genotype, NodeGene, mod_sigmoid, sigmoid
 from src.neat.phenotype import Phenotype
 from src.neat.neat_config import NeatConfig
+import numpy as np
 import logging
 
 bird_base = Genotype()
 
+
+def steep_sigmoid(x):
+    return (1 / (1 + np.exp(-4.7 * x)) - 0.5) * 2
+
+
 bird_base.node_genes = [
     NodeGene(0, NodeType.BIAS),  # Bias node
     NodeGene(1, NodeType.INPUT),  # Obstacle in front (1 if true 0 else)
-    # Sound above (normalized for amount of birds)
-    NodeGene(2, NodeType.INPUT),
 
+    # # Sound above (normalized for amount of birds)
+    NodeGene(2, NodeType.INPUT),
     NodeGene(3, NodeType.INPUT),  # Sound below
+
+    # NodeGene(2, NodeType.INPUT),  # +1 for sound louder above, -1 if below
+
     NodeGene(4, NodeType.INPUT),  # Distance to next obstacle
     # Movement of bird
     NodeGene(5, NodeType.OUTPUT, activation_func=mod_sigmoid),
@@ -62,9 +72,17 @@ class NeatBirdBrain(BirdBrain):
         return self.phenotype.node_activations.get(6, 0)
 
     def update(self, above_sound, below_sound, obst_in_front, dist_below, dist_above, obst_dist=0) -> None:
+
+        # below_above = 0
+        # if above_sound > below_sound:
+        #     below_above = 1
+        # elif below_sound > above_sound:
+        #     below_above = -1
+
         self.phenotype.calculate({
             0: 1,
             1: obst_in_front,
+            # 2: below_above,
             2: above_sound,
             3: below_sound,
             4: obst_dist,
@@ -73,27 +91,32 @@ class NeatBirdBrain(BirdBrain):
         })
 
 
+num_birds = 12
+
+
 def bird_fitness(genotype: Genotype):
     # Create a bunch of bird brains and put them in a simulation
 
     n = 5
     score_total = 0
     for i in range(n):
-        brains = [NeatBirdBrain(genotype) for i in range(6)]
+        brains = [NeatBirdBrain(genotype) for i in range(num_birds)]
         simulation = FlappySwarm(brains)
 
-        while len(simulation.birds) > 3 and simulation.obstacles_cleared < 30:
+        while len(simulation.birds) > num_birds * 0.75 and simulation.obstacles_cleared < 20:
             simulation.update()
 
-        score_total += simulation.score
+        if simulation.bird_edge_crashes == 0:
+            score_total += simulation.score
 
     return score_total / n
 
 
 def result_func(neat: NEAT):
-    if neat.population.best_individual is not None and neat.generation_num % 20 == 0:
+    # and neat.generation_num % 20 == 0:
+    if neat.population.best_individual is not None:
         brains = [NeatBirdBrain(neat.population.best_individual)
-                  for i in range(6)]
+                  for i in range(num_birds)]
         simulation = FlappySwarm(brains)
         visualize(simulation)
 
@@ -110,8 +133,15 @@ config = NeatConfig(
     prob_crossover=0.8,
     weight_perturb_scale=1,
     new_weight_power=0.8,
-    prob_to_connect_nodes=0.5,
-    prob_to_split_connection=0.2
+    sim_disjoint_weight=1.0,
+    sim_excess_weight=1.0,
+    sim_weight_diff_weight=0.3,
+    sim_genome_length_threshold=20,
+    sim_threshold=3.0,
+    species_stag_thresh=40,
+    allow_recurrence=False,
+    prob_inherit_from_fitter=0.5,
+    weight_random_type='gaussian'
 )
 
 logging.basicConfig(level=logging.NOTSET)

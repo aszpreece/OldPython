@@ -81,6 +81,7 @@ class Species:
         normalisation_factor = max(
             len(gen1.connection_genes) + len(gen1.node_genes),
             len(self.prototype.connection_genes) + len(self.prototype.node_genes))
+
         if normalisation_factor > config.sim_genome_length_threshold:
             normalisation_factor = 1
 

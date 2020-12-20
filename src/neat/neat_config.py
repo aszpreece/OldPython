@@ -10,9 +10,11 @@ class NeatConfig():
                  base_genotype,
                  mutation_manager,
                  reproduction,
-                 prob_to_mutate_weights=0.8,
                  weight_perturb_scale=1,
-                 prob_perturbing_weights=0.95,
+                 prob_perturbing_weight=0.8,
+                 prob_reset_weight=0.1,
+                 prob_enable_conn=0.01,
+                 prob_disable_conn=0.01,
                  new_weight_power=4,
                  prob_to_split_connection=0.03,
                  prob_to_connect_nodes=0.05,
@@ -38,9 +40,12 @@ class NeatConfig():
         self.neat_random = neat_random
 
         # Hyperparams for weight mutation
-        self.prob_to_mutate_weights = prob_to_mutate_weights
         self.weight_perturb_scale = weight_perturb_scale
-        self.prob_perturbing_weights = prob_perturbing_weights
+        self.prob_perturbing_weight = prob_perturbing_weight
+        self.prob_reset_weight = prob_reset_weight
+        self.prob_enable_conn = prob_enable_conn
+        self.prob_disable_conn = prob_disable_conn
+
         self.new_weight_power = new_weight_power
 
         # Hyperparams for split connection mutation

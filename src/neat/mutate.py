@@ -44,14 +44,14 @@ class DefaultMutationManager(MutationManager):
 
     def mutate(self, genotype: Genotype, config: NeatConfig):
         """Mutate the given genotype"""
-        if config.neat_random.uniform(0, 1) <= config.prob_to_mutate_weights:
-            self.weight_mutate(genotype, config)
-        if config.neat_random.uniform(0, 1) <= config.prob_to_split_connection:
+        if config.neat_random.random() < config.prob_to_split_connection:
             self.split_connection_mutate(genotype, config)
-        if config.neat_random.uniform(0, 1) <= config.prob_to_connect_nodes:
+        elif config.neat_random.random() < config.prob_to_connect_nodes:
             self.add_connection_mutate(genotype, config)
+        else:
+            self.connection_mutate(genotype, config)
 
-    def weight_mutate(self, genotype: Genotype, config: NeatConfig) -> None:
+    def connection_mutate(self, genotype: Genotype, config: NeatConfig) -> None:
         """Given a genotype, mutate each weight.
         Weights have a chance of (1-self.chance_to_assign_random_weight) to have their weights perturbed by a scale of self.weight_perturb_scale.
         Weights have a chance of self.weight_perturb_scale to have their weight set to a random value.
@@ -63,12 +63,19 @@ class DefaultMutationManager(MutationManager):
 
         for connection_gene in genotype.connection_genes:
 
-            if config.neat_random.uniform(0, 1) < config.prob_perturbing_weights:
+            if config.neat_random.random() < config.prob_perturbing_weight:
                 # Perturb the weights
                 connection_gene.weight += config.get_weight_delta() * \
                     config.weight_perturb_scale
-            else:
+
+            if config.neat_random.random() < config.prob_reset_weight:
                 connection_gene.weight = config.get_weight_delta() * config.new_weight_power
+
+            if config.neat_random.random() < config.prob_enable_conn:
+                connection_gene.enabled = True
+
+            if config.neat_random.random() < config.prob_disable_conn:
+                connection_gene.enabled = False
 
     def split_connection_mutate(self, genotype: Genotype, config: NeatConfig) -> None:
         """Given a genotype, split a random connection and add an intermediate node.
