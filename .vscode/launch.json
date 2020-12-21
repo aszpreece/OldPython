@@ -23,10 +23,13 @@
             "module": "experiment.flappy_swarm.experiment"
         },
         {
-            "name": "Test UI",
+            "name": "Display run",
             "type": "python",
             "request": "launch",
-            "module": "test.foo"
+            "module": "experiment.flappy_swarm.display_run",
+            "args": [
+                "./flappy_genomes/genome[6]"
+            ]
         }
     ]
 }

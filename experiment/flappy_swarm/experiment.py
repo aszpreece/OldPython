@@ -1,5 +1,7 @@
 
 from operator import mod
+from random import Random, normalvariate
+from sys import platform
 from src.neat.neat import NEAT
 from experiment.run_experiment import train_neat
 from src.neat.mutate import DefaultMutationManager
@@ -11,6 +13,8 @@ from src.neat.phenotype import Phenotype
 from src.neat.neat_config import NeatConfig
 import numpy as np
 import logging
+import pickle
+import time
 
 bird_base = Genotype()
 
@@ -34,8 +38,8 @@ bird_base.node_genes = [
     NodeGene(5, NodeType.OUTPUT, activation_func=mod_sigmoid),
     # Sound from bird
     NodeGene(6, NodeType.OUTPUT, activation_func=sigmoid),
-    NodeGene(7, NodeType.INPUT),  # Dist below
-    NodeGene(8, NodeType.INPUT),  # Dist above
+    # NodeGene(7, NodeType.INPUT),  # Dist below
+    # NodeGene(8, NodeType.INPUT),  # Dist above
 ]
 
 # Set up perceptron
@@ -59,6 +63,8 @@ bird_base.connection_genes = [
 bird_base.conn_innov_start = 11
 bird_base.node_innov_start = 8
 
+input_noise = Random()
+
 
 class NeatBirdBrain(BirdBrain):
 
@@ -81,13 +87,13 @@ class NeatBirdBrain(BirdBrain):
 
         self.phenotype.calculate({
             0: 1,
-            1: obst_in_front,
+            1: (obst_in_front + input_noise.normalvariate(0, 0)),
             # 2: below_above,
             2: above_sound,
             3: below_sound,
             4: obst_dist,
-            7: dist_below,
-            8: dist_above
+            # 7: dist_below,
+            # 8: dist_above
         })
 
 
@@ -101,9 +107,9 @@ def bird_fitness(genotype: Genotype):
     score_total = 0
     for i in range(n):
         brains = [NeatBirdBrain(genotype) for i in range(num_birds)]
-        simulation = FlappySwarm(brains)
+        simulation = FlappySwarm(brains, kill_on_edge=False)
 
-        while len(simulation.birds) > num_birds * 0.75 and simulation.obstacles_cleared < 20:
+        while len(simulation.birds) and simulation.obstacles_cleared < 20:
             simulation.update()
 
         if simulation.bird_edge_crashes == 0:
@@ -113,36 +119,36 @@ def bird_fitness(genotype: Genotype):
 
 
 def result_func(neat: NEAT):
-    # and neat.generation_num % 20 == 0:
+
     if neat.population.best_individual is not None:
-        brains = [NeatBirdBrain(neat.population.best_individual)
-                  for i in range(num_birds)]
-        simulation = FlappySwarm(brains)
-        visualize(simulation)
+        with open(f'./flappy_genomes/genome[{neat.generation_num}]', 'wb') as fh:
+            pickle.dump(neat.population.best_individual, fh,
+                        protocol=pickle.HIGHEST_PROTOCOL)
 
 
-config = NeatConfig(
-    activation_func=sigmoid,
-    fitness_function=bird_fitness,
-    base_genotype=bird_base,
-    reproduction=DefaultReproductionManager(),
-    generation_size=150,
-    mutation_manager=DefaultMutationManager(12, 9),
-    species_target=10,
-    species_mod=0.1,
-    prob_crossover=0.8,
-    weight_perturb_scale=1,
-    new_weight_power=0.8,
-    sim_disjoint_weight=1.0,
-    sim_excess_weight=1.0,
-    sim_weight_diff_weight=0.3,
-    sim_genome_length_threshold=20,
-    sim_threshold=3.0,
-    species_stag_thresh=40,
-    allow_recurrence=False,
-    prob_inherit_from_fitter=0.5,
-    weight_random_type='gaussian'
-)
+if __name__ == "__main__":
+    config = NeatConfig(
+        activation_func=sigmoid,
+        fitness_function=bird_fitness,
+        base_genotype=bird_base,
+        reproduction=DefaultReproductionManager(),
+        generation_size=150,
+        mutation_manager=DefaultMutationManager(12, 9),
+        species_target=10,
+        species_mod=0.1,
+        prob_crossover=0.8,
+        weight_perturb_scale=1,
+        new_weight_power=0.8,
+        sim_disjoint_weight=1.0,
+        sim_excess_weight=1.0,
+        sim_weight_diff_weight=0.3,
+        sim_genome_length_threshold=20,
+        sim_threshold=3.0,
+        species_stag_thresh=40,
+        allow_recurrence=False,
+        prob_inherit_from_fitter=0.5,
+        weight_random_type='gaussian'
+    )
 
-logging.basicConfig(level=logging.NOTSET)
-train_neat(bird_fitness, config, 1320, result_func=result_func)
+    logging.basicConfig(level=logging.NOTSET)
+    train_neat(bird_fitness, config, 1320, result_func=result_func)

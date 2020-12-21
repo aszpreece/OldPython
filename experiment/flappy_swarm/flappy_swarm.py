@@ -50,7 +50,7 @@ class Bird:
 
 class FlappySwarm:
 
-    def __init__(self, bird_brains):
+    def __init__(self, bird_brains, kill_on_edge=False):
 
         self.arena_height = 20.0
         self.opening_size = 3.0
@@ -71,7 +71,7 @@ class FlappySwarm:
         self.obstacles_cleared = 0
 
         self.moving_obstacle = False
-        self.kill_on_edge = True
+        self.kill_on_edge = kill_on_edge
         self.bird_edge_crashes = 0
 
     def randomize_obstacle(self):
@@ -165,11 +165,11 @@ class FlappySwarm:
         return True if len(self.birds) == 0 else False
 
 
-def visualize(instance: FlappySwarm) -> None:
+def visualize(instance: FlappySwarm, time_delay=200) -> None:
     pygame.init()
 
     screen = pygame.display.set_mode((800, 600))
-    pygame.display.set_caption('Those chickens are up to something!')
+    pygame.display.set_caption('Flappy Swarm')
 
     scale = 20.0  # 600 / instance.arena_height
 
@@ -195,8 +195,8 @@ def visualize(instance: FlappySwarm) -> None:
                                (1, bird.y * scale), 4)
 
         pygame.display.flip()
-        pygame.time.delay(200)  # 1 second == 1000 milliseconds
-
+        pygame.time.delay(time_delay)  # 1 second == 1000 milliseconds
         instance.update()
 
+    pygame.display.quit()
     pygame.quit()
