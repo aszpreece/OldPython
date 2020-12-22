@@ -48,53 +48,72 @@ class Bird:
                           obst_in_front, dist_below, dist_above, obst_dist)
 
 
+class FlappySwarmConfig:
+    def __init__(self,
+        arena_height=20.0,
+        opening_size=3.0,
+        obstacle_distance: int = 30,
+        obstacle_speed=0.5,
+        moving_obstacle=False,
+        kill_on_edge=False,
+        detector_noise_std=0):
+        
+        self.arena_height  = arena_height 
+        self.opening_size = opening_size
+        self.obstacle_distance = obstacle_distance
+        self.obstacle_speed = obstacle_speed
+        self.moving_obstacle = moving_obstacle
+        self.kill_on_edge = kill_on_edge
+        self.detector_noise_std = detector_noise_std
+
 class FlappySwarm:
 
-    def __init__(self, bird_brains, kill_on_edge=False):
+    def __init__(self, bird_brains, config):
 
-        self.arena_height = 20.0
-        self.opening_size = 3.0
-        self.obstacle_distance: int = 30
-        self.obstacle_speed = 0.5
+        self.arena_height=config.arena_height
+        self.opening_size=config.opening_size
+        self.obstacle_distance= config.obstacle_distance
+        self.obstacle_speed=config.obstacle_speed
+        self.moving_obstacle=config.moving_obstacle
+        self.kill_on_edge=config.kill_on_edge
+        self.detector_noise_std = config.detector_noise_std
 
-        self.obstacle_x = self.obstacle_distance
+        self.obstacle_x=self.obstacle_distance
         # Y pos of the top of the opening
-        self.obstacle_opening_y = 0
-        self.original_opening_y = 0
+        self.obstacle_opening_y=0
+        self.original_opening_y=0
 
         self.randomize_obstacle()
 
-        self.birds: List[Bird] = [Bird(bird_brains[i], pos) for i, pos in enumerate(
+        self.birds: List[Bird]=[Bird(bird_brains[i], pos) for i, pos in enumerate(
             np.linspace(0, self.arena_height, len(bird_brains)))]
 
-        self.score = 0
-        self.obstacles_cleared = 0
+        self.score=0
+        self.obstacles_cleared=0
 
-        self.moving_obstacle = False
-        self.kill_on_edge = kill_on_edge
-        self.bird_edge_crashes = 0
+        self.bird_edge_crashes=0
 
     def randomize_obstacle(self):
-        self.obstacle_x = self.obstacle_distance
-        self.original_opening_y = random.uniform(
+        self.obstacle_x=self.obstacle_distance
+        self.original_opening_y=random.uniform(
             0, self.arena_height - self.opening_size)
-        self.obstacle_opening_y = self.original_opening_y
+        self.obstacle_opening_y=self.original_opening_y
 
     def shift_obstacle(self):
-        self.obstacle_opening_y = self.original_opening_y + math.sin((self.obstacle_x /
+        self.obstacle_opening_y=self.original_opening_y + math.sin((self.obstacle_x /
                                                                       self.obstacle_distance) * math.pi * 2) * self.opening_size
-        self.obstacle_opening_y = max(
+        self.obstacle_opening_y=max(
             0, min(self.obstacle_opening_y, self.arena_height - self.opening_size))
 
     def collision_course(self, bird):
         if bird.y < self.obstacle_opening_y or bird.y > self.obstacle_opening_y + self.opening_size:
-            return True
+            return 1
         else:
-            return False
+            return 0
 
     def update(self):
 
-        list.sort(self.birds, key=lambda bird: bird.y)
+        list.sort(self.birds, key = lambda bird: bird.y)
 
         # Gather the inputs to the birds and update them
         total_sound = 0
@@ -121,25 +140,25 @@ class FlappySwarm:
             #     bird)) - 0.5, dist_below, dist_above, self.obstacle_x / self.obstacle_distance)
 
             bird.update(sound_above / len(self.birds), sound_below /
-                        len(self.birds), self.collision_course(bird), dist_below, dist_above, self.obstacle_x / self.obstacle_distance)
+                        len(self.birds), self.collision_course(bird) +  random.normalvariate(0, self.detector_noise_std), dist_below, dist_above, self.obstacle_x / self.obstacle_distance)
 
-            prev_y = bird.y
+            prev_y=bird.y
             sound_above += my_sound
 
         # Get the movement for the bird
         for bird in self.birds:
-            new_pos = bird.y + bird.get_movement()
+            new_pos=bird.y + bird.get_movement()
 
             if self.kill_on_edge and (new_pos < 0 or new_pos > self.arena_height):
-                bird.alive = False
+                bird.alive=False
                 self.bird_edge_crashes += 1
             else:
-                new_pos = max(0, min(new_pos, self.arena_height))
+                new_pos=max(0, min(new_pos, self.arena_height))
 
-            bird.y = new_pos
+            bird.y=new_pos
 
         # Filter out dead birds
-        self.birds = list(filter(lambda bird: bird.alive, self.birds))
+        self.birds=list(filter(lambda bird: bird.alive, self.birds))
 
         if self.obstacle_x < 0:
             # Do the collision checking
@@ -168,15 +187,16 @@ class FlappySwarm:
 def visualize(instance: FlappySwarm, time_delay=200) -> None:
     pygame.init()
 
-    screen = pygame.display.set_mode((800, 600))
+    screen=pygame.display.set_mode((800, 600))
     pygame.display.set_caption('Flappy Swarm')
 
-    scale = 20.0  # 600 / instance.arena_height
+    scale=20.0  # 600 / instance.arena_height
 
     while not instance.all_dead():
+        pygame.event.pump()
         screen.fill((255, 255, 255))
 
-        top_rect = (instance.obstacle_x * scale, 0, 2,
+        top_rect=(instance.obstacle_x * scale, 0, 2,
                     instance.obstacle_opening_y * scale)
         # Draw top of obstacle
         pygame.draw.rect(screen, (200, 100, 100), top_rect)

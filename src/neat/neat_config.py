@@ -31,7 +31,8 @@ class NeatConfig():
                  allow_recurrence=False,
                  prob_inherit_from_fitter=0.5,
                  prob_crossover=0.0,
-                 weight_random_type='gaussian'
+                 weight_random_type='gaussian',
+                 run_id=''
                  ):
 
         self.reproduction = reproduction
@@ -76,6 +77,7 @@ class NeatConfig():
         self.activation_func = activation_func
 
         self.weight_random_type = weight_random_type
+        self.run_id = run_id
 
     def get_weight_delta(self) -> float:
         if self.weight_random_type == 'uniform':

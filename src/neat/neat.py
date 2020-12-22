@@ -23,6 +23,7 @@ class NEAT:
         self.species: Dict[int, Species] = {}
         self.species_index = 0
         self.generation_num = 0
+        self.run_id = neat_config.run_id
 
     def get_next_species_number(self):
         self.species_index += 1

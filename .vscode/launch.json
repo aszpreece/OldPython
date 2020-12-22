@@ -27,9 +27,7 @@
             "type": "python",
             "request": "launch",
             "module": "experiment.flappy_swarm.display_run",
-            "args": [
-                "./flappy_genomes/genome[6]"
-            ]
+     
         }
     ]
 }
