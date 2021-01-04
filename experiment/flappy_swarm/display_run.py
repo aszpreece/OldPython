@@ -13,6 +13,8 @@ else:
 
 noise = float(input('Please provide noise:'))
 
+comms = input('enter y if comms enabled') == 'y'
+
 num_birds = 12
 fh = open(path, 'rb')
 print(fh.name)
@@ -21,6 +23,6 @@ fh.close()
 
 brains = [NeatBirdBrain(genome)
           for i in range(num_birds)]
-simulation = FlappySwarm(brains, FlappySwarmConfig(detector_noise_std=noise))
+simulation = FlappySwarm(brains, FlappySwarmConfig(detector_noise_std=noise, communication=comms))
 visualize(simulation, 200)
 exit()

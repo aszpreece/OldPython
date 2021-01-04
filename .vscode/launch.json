@@ -29,5 +29,12 @@
             "module": "experiment.flappy_swarm.display_run",
      
         }
+        {
+            "name": "Display Results",
+            "type": "python",
+            "request": "launch",
+            "module": "experiment.flappy_swarm.display_results",
+     
+        }
     ]
 }

@@ -12,7 +12,6 @@ def save_genome(genome, run_id, experiment_name, genome_id, path='genomes'):
 
 def open_genome(run_id, experiment_name, genome_id, path='genomes'):
     fh = open(f'./{path}/{experiment_name}/{run_id}/{genome_id}', 'rb')
-    print(fh.name)
     genome = pickle.load(fh)
     fh.close()
     return genome

@@ -56,7 +56,8 @@ class FlappySwarmConfig:
         obstacle_speed=0.5,
         moving_obstacle=False,
         kill_on_edge=False,
-        detector_noise_std=0):
+        detector_noise_std=0,
+        communication=True):
         
         self.arena_height  = arena_height 
         self.opening_size = opening_size
@@ -65,6 +66,7 @@ class FlappySwarmConfig:
         self.moving_obstacle = moving_obstacle
         self.kill_on_edge = kill_on_edge
         self.detector_noise_std = detector_noise_std
+        self.communication = communication
 
 class FlappySwarm:
 
@@ -77,6 +79,7 @@ class FlappySwarm:
         self.moving_obstacle=config.moving_obstacle
         self.kill_on_edge=config.kill_on_edge
         self.detector_noise_std = config.detector_noise_std
+        self.communication = config.communication
 
         self.obstacle_x=self.obstacle_distance
         # Y pos of the top of the opening
@@ -139,8 +142,12 @@ class FlappySwarm:
             # bird.update(above_sound, below_sound, int(self.collision_course(
             #     bird)) - 0.5, dist_below, dist_above, self.obstacle_x / self.obstacle_distance)
 
+            if self.communication == False:
+                sound_above = 0
+                sound_below = 0
+                
             bird.update(sound_above / len(self.birds), sound_below /
-                        len(self.birds), self.collision_course(bird) +  random.normalvariate(0, self.detector_noise_std), dist_below, dist_above, self.obstacle_x / self.obstacle_distance)
+                        len(self.birds), self.collision_course(bird) -0.5 +  random.normalvariate(0, self.detector_noise_std), dist_below, dist_above, self.obstacle_x / self.obstacle_distance)
 
             prev_y=bird.y
             sound_above += my_sound

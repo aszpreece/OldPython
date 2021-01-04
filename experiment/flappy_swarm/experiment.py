@@ -113,60 +113,70 @@ def result_func(neat: NEAT):
         save_genome(neat.population.best_individual, neat.run_id, 'flappy', neat.generation_num)
 
 
+def thread_experiment( noise, run_num):
+
+    print(f'Running noise {noise} run num {run_num}')
+    
+    def bird_fitness(genotype: Genotype):
+        # Create a bunch of bird brains and put them in a simulation
+
+        n = 5
+        score_total = 0
+        for i in range(n):
+            brains = [NeatBirdBrain(genotype) for i in range(num_birds)]
+            simulation = FlappySwarm(brains, FlappySwarmConfig(detector_noise_std=noise, communication=True))
+
+            while len(simulation.birds) and simulation.obstacles_cleared < 10:
+                simulation.update()
+
+            if simulation.bird_edge_crashes == 0:
+                score_total += simulation.score
+
+        return score_total / n
+    config = NeatConfig(
+        activation_func=sigmoid,
+        fitness_function=bird_fitness,
+        base_genotype=bird_base,
+        reproduction=DefaultReproductionManager(),
+        generation_size=150,
+        mutation_manager=DefaultMutationManager(12, 9),
+        species_target=10,
+        species_mod=0.1,
+        prob_crossover=0.8,
+        weight_perturb_scale=1,
+        new_weight_power=0.8,
+        sim_disjoint_weight=1.0,
+        sim_excess_weight=1.0,
+        sim_weight_diff_weight=0.3,
+        sim_genome_length_threshold=20,
+        sim_threshold=3.0,
+        species_stag_thresh=40,
+        allow_recurrence=False,
+        prob_inherit_from_fitter=0.5,
+        weight_random_type='gaussian',
+        run_id=f'[{noise}][{run_num}]'
+    )
+
+    logging.basicConfig(level=logging.WARNING)
+    data = train_neat(fitness_func=bird_fitness, config=config,target_score=None,result_func=result_func, generations=120)
+    with open(f'./results/{config.run_id}', 'wb') as f:
+        pickle.dump(data, f)
+    
 if __name__ == "__main__":
 
-    noise_vals = [0, 0.2, 0.4, 0.6, 0.8]
-    runs_per_val = 10
+    noise_vals = [0, 0.1, 0.2, 0.4, 0.6, 0.8]
+    noise_vals = [0.0]
+    runs_per_val = 14
 
-    def thread_experiment(args):
-        noise, run_num = args
-        print(f'Running noise {noise} run num {run_num}')
-        
-        def bird_fitness(genotype: Genotype):
-            # Create a bunch of bird brains and put them in a simulation
+    def error(err):
+        print(err)
 
-            n = 5
-            score_total = 0
-            for i in range(n):
-                brains = [NeatBirdBrain(genotype) for i in range(num_birds)]
-                simulation = FlappySwarm(brains, FlappySwarmConfig(detector_noise_std=noise))
-
-                while len(simulation.birds) and simulation.obstacles_cleared < 10:
-                    simulation.update()
-
-                if simulation.bird_edge_crashes == 0:
-                    score_total += simulation.score
-
-            return score_total / n
-        config = NeatConfig(
-            activation_func=sigmoid,
-            fitness_function=bird_fitness,
-            base_genotype=bird_base,
-            reproduction=DefaultReproductionManager(),
-            generation_size=150,
-            mutation_manager=DefaultMutationManager(12, 9),
-            species_target=10,
-            species_mod=0.1,
-            prob_crossover=0.8,
-            weight_perturb_scale=1,
-            new_weight_power=0.8,
-            sim_disjoint_weight=1.0,
-            sim_excess_weight=1.0,
-            sim_weight_diff_weight=0.3,
-            sim_genome_length_threshold=20,
-            sim_threshold=3.0,
-            species_stag_thresh=40,
-            allow_recurrence=False,
-            prob_inherit_from_fitter=0.5,
-            weight_random_type='gaussian',
-            run_id=f'[{noise}][{run_num}]'
-        )
-
-        logging.basicConfig(level=logging.WARNING)
-        data = train_neat(fitness_func=bird_fitness, config=config,target_score=None,result_func=result_func, generations=120)
-        with open(f'./results/{config.run_id}', 'wb') as f:
-            pickle.dump(data, f)
-
+    import multiprocessing as mp
+    pool = mp.Pool(mp.cpu_count())
     args = [(n, r) for r in range(runs_per_val) for n in noise_vals]
-    with concurrent.futures.ThreadPoolExecutor(max_workers=None) as executor:
-        executor.map(thread_experiment, args)
+    results = [pool.apply_async(thread_experiment, a, error_callback=error) for a in args]
+    pool.close()
+    pool.join()
+
+
+    
