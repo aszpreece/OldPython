@@ -1,0 +1,20 @@
+\section{Reasons for Swarm Evolution}
+
+\subsection{Evolutionary Pressures}
+In the natural world, many evolutionary pressures likely contributed to the evolution of swarm behaviours. Multiple hypothesis have been proposed over the years and recently some of these hypothesis have been tested in computer simulations.\par
+
+One reason proposed for the development of swarm behaviour is The Many Eyes hypothesis. \textbf{In a highly influential paper, Pulliam (1973) advanced the hypothesis that animals benefit by flocking because the vigilance of flock-mates leads to an increase in the probability of detecting a predator within the time it takes to attack.} This hypothesis has been explored in multiple papers. \par
+
+However, it is often explored from the angle of the trade off between foraging efficiency and vigilance. This effectively assumes that it is only the total area of space that can be observed by a swarm which impacts the formation of group behaviour. In this experiment I wish the explore the many eyes hypothesis from a different angle, that of the physical reliability of an individual sensors. My hypothesis is that the reliability of an individual's senses may put pressure upon them to form collaborative behaviour with one another and 'pool' their sensing power. For example, if a visual sensor only correctly detects a predator in front of it $75\%$ of the time then evolution may favour those individuals who chose to signal to each other when they detect a predator. This would allow each member of the swarm to infer a more accurate reading of whether or not there was a predator in front of it, and as a result could more reliably avoid danger. Note: Predators are only used here as an example. In the the real world this could be a food source or some sort of obstacle.\par
+
+More brao
+
+\subsection{Experiment}
+In order to test this hypothesis I devised an experiment where I tested the performance of artificial 'birds' on a simple obstacle course. The set up was as so: $N$ birds were placed in a 2D arena evenly distributed along the y axis. In the arena was a sliding wall with an opening in it that took up the height of the arena. The sliding wall would move towards the birds at a constant speed. If a bird was hit by the wall when it reached them without being in front of the gap then it was killed and removed from the simulation. Once the wall reach the end it was reset and the opening placed in a random position.\par
+
+Each bird had the ability to move up and down on the Y axis and make sound (which was represented as a scalar output between 0 and 1). As inputs, each bird was given the distance between itself and the next sliding door, the total amount of noise coming from above and below it, and a detector sensor that would return $1$ if a wall was in front of it and $0$ if otherwise. The detector sensor would have a configurable amount of noise added to it that was sampled from a normal distribution with $\textmu=0$ and $\sigma$ being the  configurable parameter.
+\par
+
+To evolve the controllers I used my implementation of the NEAT algorithm with the following configuration: (Insert config). The fitness was calculated by adding the number of birds alive to the total fitness each time the birds cleared an obstacle. As theoretically the birds could continue in the simulation indefinitely, I limited the simulation to only allow them to clear 10 obstacles. This had the effect of limiting the max fitness score achievable to $N\times 10$.\par
+
+The controllers that NEAT evolves are deterministic (Disregarding floating point inaccuracy) meaning that the introduction of psuedo-random noise into the input of the birds may give them some sort of advantage 
