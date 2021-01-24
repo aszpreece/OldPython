@@ -3,8 +3,7 @@ import re
 import pickle
 import matplotlib.pyplot as plt
 import numpy as np
-from experiment.flappy_swarm.f_test import f_test
-
+import scipy.stats as stats
 
 def tolerant_mean(arrs):
     lens = [len(i) for i in arrs]
@@ -36,7 +35,7 @@ def get_run_scores(folder, keys):
 
     scores = []
     for key in keys:
-        result_files = re_dict[key]
+        result_files = re_dict.get(key, [])
         noise_score = []
         for res in result_files:
             with open(os.path.join(folder, res), 'rb') as fh:
@@ -52,11 +51,10 @@ def get_run_scores(folder, keys):
 
 fig, ax = plt.subplots(2, sharex=True, sharey=True)
 
-keys = ['0', '0.1', '0.2', '0.4', '0.6', '0.8']
-
+keys = ['0.0', '0.1', '0.2', '0.4', '0.6', '0.8']
 # folder = './results/flappy_ce'
-ce_scores = get_run_scores('./results/flappy_ce', keys)
-cd_scores = get_run_scores('./results/flappy_cd', keys)
+ce_scores = get_run_scores('./results/flappy_fce', keys)
+cd_scores = get_run_scores('./results/flappy_fcd', keys)
 
 ax[0].set_title('Communication Enabled')
 plot_mean(ce_scores, ax[0], keys)
@@ -70,10 +68,14 @@ def plot_scatter_generation(scores, generation_num, axis):
     x, y = data.T
     axis.scatter(x, y, marker='x')
     #ax2.legend(keys)
+
+def plot_histogram(scores, generation_num, axis, noise_to_plot):
+    # scores[a, b, c] where a is noise b is run c is generation
+    last_gen_scores = scores[:, :, generation_num]
+    data = np.array([data for i, noise in enumerate(keys) if noise == noise_to_plot for data in last_gen_scores[i]])
+    axis.hist(data)
+    #ax2.legend(keys)
     
-     
-
-
 # Display results of last run in a scatter graph
 fig2, ax2 = plt.subplots(2, sharex=True, sharey=True)
 ax2[0].set_title('Communication Enabled')
@@ -81,8 +83,13 @@ plot_scatter_generation(ce_scores, -1, ax2[0])
 ax2[1].set_title('Communication Disabled')
 plot_scatter_generation(cd_scores, -1, ax2[1])
 
+p = stats.mannwhitneyu(ce_scores[0, :, -1], ce_scores[1, :, -1], alternative='less')
+print(p)
 
-# print(f_test(scores[:, :, -1]))
+fig3, ax3 = plt.subplots(2, sharex=True, sharey=True)
+plot_histogram(ce_scores, -1, ax3[0], '0.0')
+
+plot_histogram(ce_scores, -1, ax3[1], '0.2')
 
 fig2.show()
 fig.show()

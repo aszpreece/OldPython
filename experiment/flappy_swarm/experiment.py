@@ -164,8 +164,8 @@ def thread_experiment( noise, run_num):
     
 if __name__ == "__main__":
 
-    noise_vals = [0, 0.1, 0.2, 0.4, 0.6, 0.8]
-    noise_vals = [0.0]
+    #TODO one extra 0.0 needed
+    noise_vals = [0.0, 0.1, 0.2, 0.4, 0.6, 0.8]
     runs_per_val = 14
 
     def error(err):
