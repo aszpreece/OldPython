@@ -57,7 +57,7 @@ class Phenotype:
         # Initialize the input nodes with the given activations
         for key, activation in inputs.items():
             new_activations[key] = activation
-
+        
         for node_id, activation_func in self.nodes:
             total = 0
             for connection in self.connections.get(node_id, []):
