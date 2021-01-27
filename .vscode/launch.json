@@ -27,14 +27,24 @@
             "type": "python",
             "request": "launch",
             "module": "experiment.flappy_swarm.display_run",
-     
-        }
+        },
         {
             "name": "Display Results",
             "type": "python",
             "request": "launch",
             "module": "experiment.flappy_swarm.display_results",
-     
-        }
+        },
+        {
+            "name": "Swarm2d",
+            "type": "python",
+            "request": "launch",
+            "module": "experiment.swarm_2d.experiment"
+        },
+        {
+            "name": "Display run 2d",
+            "type": "python",
+            "request": "launch",
+            "module": "experiment.swarm_2d.display_run",
+        },
     ]
 }

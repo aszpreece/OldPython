@@ -1,5 +1,5 @@
 {
-    "python.pythonPath": "c:\\_development\\fyp\\env\\Scripts\\python.exe",
+    "python.pythonPath": "env/bin/python",
     "python.analysis.diagnosticSeverityOverrides": {
         "reportMissingImports": "none"
     },
@@ -23,6 +23,7 @@
         "ione",
         "itwo",
         "mutators",
+        "obst",
         "venv",
         "virtualenv"
     ],
