@@ -17,7 +17,6 @@ import pickle
 from datetime import datetime
 from experiment.save_genome import save_genome
 import random
-import concurrent.futures
 
 
 bird_base = Genotype()

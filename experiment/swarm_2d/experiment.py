@@ -8,7 +8,7 @@ from src.neat.mutate import DefaultMutationManager
 from src.neat.reproduction import DefaultReproductionManager
 from experiment.swarm_2d.swarm_2d import CreatureBrain2D, Swarm2D, visualize, Swarm2DConfig
 from src.neat.node_type import NodeType
-from src.neat.genotype import ConnectionGene, Genotype, NodeGene, mod_sigmoid, sigmoid
+from src.neat.genotype import ConnectionGene, Genotype, NodeGene, mod_sigmoid, sigmoid, generate_perceptron_connections
 from src.neat.phenotype import Phenotype
 from src.neat.neat_config import NeatConfig
 import numpy as np
@@ -17,7 +17,6 @@ import pickle
 from datetime import datetime
 from experiment.save_genome import save_genome
 import random
-import concurrent.futures
 
 
 creature_base = Genotype()
@@ -55,29 +54,13 @@ creature_base.node_genes = [
     NodeGene(15, NodeType.OUTPUT, activation_func=sigmoid),
 ]
 
-# Set up perceptron
-creature_base.connection_genes = [
-    # ConnectionGene(0, 1, 5, 0),
-    # ConnectionGene(1, 2, 5, 0),
-    # ConnectionGene(2, 3, 5, 0),
-    # ConnectionGene(3, 4, 5, 0),
-    # ConnectionGene(4, 5, 5, 0),
-
-    # ConnectionGene(5, 1, 6, 0),
-    # ConnectionGene(6, 2, 6, 0),
-    # ConnectionGene(7, 3, 6, 0),
-    # ConnectionGene(8, 4, 6, 0),
-    # ConnectionGene(9, 5, 6, 0),
-
-    # ConnectionGene(10, 7, 5, 0),
-    # ConnectionGene(11, 8, 6, 0),
-]
-
-creature_base.conn_innov_start = 11
-creature_base.node_innov_start = 16
+# creature_base.conn_innov_start = 11
+# creature_base.node_innov_start = 16
 
 input_noise = Random()
+random_weights = Random()
 
+generate_perceptron_connections(creature_base, random_weights)
 
 class NeatBrain2D(CreatureBrain2D):
 
@@ -127,11 +110,13 @@ def thread_experiment(noise, run_num):
 
         n = 5
         score_total = 0
+
         for i in range(n):
             brains = [NeatBrain2D(genotype) for i in range(num_birds)]
             simulation = Swarm2D(brains, Swarm2DConfig(
                 detector_noise_std=noise, communication=True))
 
+     
             while len(simulation.birds) and simulation.obstacles_cleared < 10:
                 simulation.update()
 
@@ -146,7 +131,7 @@ def thread_experiment(noise, run_num):
         base_genotype=creature_base,
         reproduction=DefaultReproductionManager(),
         generation_size=150,
-        mutation_manager=DefaultMutationManager(12, 9),
+        mutation_manager=DefaultMutationManager(creature_base),
         species_target=10,
         species_mod=0.1,
         prob_crossover=0.8,
@@ -173,8 +158,6 @@ def thread_experiment(noise, run_num):
 
 if __name__ == "__main__":
 
-    thread_experiment(0, 1)
-
     # TODO one extra 0.0 needed
     noise_vals = [0.0, 0.1, 0.2, 0.4, 0.6, 0.8]
     runs_per_val = 14
@@ -183,7 +166,7 @@ if __name__ == "__main__":
         print(err)
 
     import multiprocessing as mp
-    pool = mp.Pool(1)  # mp.cpu_count())
+    pool = mp.Pool(mp.cpu_count())
     args = [(n, r) for r in range(runs_per_val) for n in noise_vals]
     results = [pool.apply_async(
         thread_experiment, a, error_callback=error) for a in args]

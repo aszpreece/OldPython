@@ -6,7 +6,7 @@ import math
 from src.neat.node_type import NodeType
 from typing import Deque, List, Optional, Set
 from src.neat.phenotype import Phenotype
-
+from random import Random
 
 def relu(x: float) -> float:
     if x < 0:
@@ -124,3 +124,16 @@ class Genotype:
                 stack.append(source)
 
         return False
+
+def generate_perceptron_connections(genotype: Genotype, random: Random, mu=0, sigma=1.5):
+    """
+        Generates connections from every input to every output with a randomized weight controlled by mu and sigma.
+    """
+    inputs = list(filter(lambda c: c.type == NodeType.INPUT, genotype.node_genes))
+    outputs = list(filter(lambda c: c.type == NodeType.OUTPUT, genotype.node_genes))
+
+    innov = 0
+    for i in inputs:
+        for o in outputs:
+            genotype.connection_genes.append(ConnectionGene(innov, i.innov_id, o.innov_id, random.normalvariate(0, sigma)))
+            innov += 1

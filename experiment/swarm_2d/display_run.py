@@ -1,10 +1,13 @@
 from datetime import datetime
-from experiment.swarm_2D.experiment import NeatBrain2D
+from experiment.swarm_2d.experiment import NeatBrain2D
 from experiment.swarm_2d.swarm_2d import Swarm2D, Swarm2DConfig, visualize
 from experiment.swarm_2d.experiment import CreatureBrain2D
+from experiment.swarm_2d.experiment import steep_sigmoid
 import pickle
 import sys
 from experiment.save_genome import open_genome
+import multiprocessing as mp
+
 
 path = ''
 if len(sys.argv) < 2:

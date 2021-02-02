@@ -10,9 +10,9 @@ import logging
 
 class MutationManager:
 
-    def __init__(self, starting_connection, starting_node) -> None:
-        self.connection_innovation_number = starting_connection
-        self.node_innovation_number = starting_node
+    def __init__(self,  initial_genome: Genotype) -> None:
+        self.connection_innovation_number = max(map(lambda c: c.innov_id, initial_genome.connection_genes))
+        self.node_innovation_number = max(map(lambda c: c.innov_id, initial_genome.node_genes))
 
     def cycle(self):
         pass
@@ -31,8 +31,8 @@ class MutationManager:
 
 class DefaultMutationManager(MutationManager):
 
-    def __init__(self, starting_connection, starting_node) -> None:
-        super().__init__(starting_connection, starting_node)
+    def __init__(self, initial_genome: Genotype) -> None:
+        super().__init__(initial_genome)
         self.split_signatures = {}
         self.new_conn_signatures = {}
 

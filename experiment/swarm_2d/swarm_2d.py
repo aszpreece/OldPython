@@ -45,14 +45,15 @@ class Creature2D:
         self.brain = brain
         self.alive = True
         self.speed = 0.7
+        self.rotation_speed = 0.2
         self.ears = ears
         self.bird_id = bird_id
 
     def get_movement(self) -> float:
-        return self.brain.get_movement()
+        return self.brain.get_movement() * self.speed
 
     def get_rotation(self) -> float:
-        return self.brain.get_rotation()
+        return self.brain.get_rotation() * self.rotation_speed
 
     def get_sound(self) -> float:
         return self.brain.get_sound()
@@ -155,8 +156,13 @@ class Swarm2D:
                 if bird.bird_id == other_bird.bird_id:
                     to_other_birds.append(0)
                 else:
-                    to_other_birds.append(
-                        (other_bird.pos - bird.pos).normalize())
+                    diff = other_bird.pos - bird.pos
+                    if diff.length_squared() > 0:
+                        to_other_birds.append(
+                            diff.normalize())
+                    else:
+                        to_other_birds.append(
+                            pygame.Vector2(0, 1))
 
             for ear in range(bird.ears):
                 x = math.cos(current_angle)
@@ -176,12 +182,21 @@ class Swarm2D:
 
         # Update each bird
         for i, bird in enumerate(self.birds):
-            in_zone = self.collision_course(bird)
 
             delta = pygame.Vector2(bird.get_movement(), bird.get_rotation())
             bird.rotation += bird.get_rotation()
             bird.pos += pygame.Vector2(math.cos(bird.rotation),
                                        math.sin(bird.rotation)) * bird.get_movement()
+            if bird.pos.x < 0:
+                bird.pos.x = 0
+            if bird.pos.x > self.arena_side_length:
+                bird.pos.x = self.arena_side_length
+            if bird.pos.y < 0:
+                bird.pos.y = 0
+            if bird.pos.y > self.arena_side_length:
+                bird.pos.y = self.arena_side_length
+            
+            in_zone = self.collision_course(bird) + random.normalvariate(0, self.detector_noise_std)
 
             bird.update(all_bird_ear_inputs[i], in_zone, normalize(
                 bird.pos.x, self.arena_side_length), normalize(
