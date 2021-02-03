@@ -53,8 +53,8 @@ fig, ax = plt.subplots(2, sharex=True, sharey=True)
 
 keys = ['0.0', '0.1', '0.2', '0.4', '0.6', '0.8']
 # folder = './results/flappy_ce'
-ce_scores = get_run_scores('./results/flappy_fce', keys)
-cd_scores = get_run_scores('./results/flappy_fcd', keys)
+ce_scores = get_run_scores('./results/prelim', keys)
+cd_scores = get_run_scores('./results/prelim', keys)
 
 ax[0].set_title('Communication Enabled')
 plot_mean(ce_scores, ax[0], keys)

@@ -24,7 +24,6 @@ class TestBrain(CreatureBrain2D):
         self.y = y
         self.obst_dist = obst_dist
 
-
 class Ears3D(unittest.TestCase):
 
     def test_correct_inputs(self):
