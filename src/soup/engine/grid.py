@@ -1,6 +1,6 @@
 import math
 import pygame as pg
-from src.soup.util import clamp
+from src.util.util import clamp
 
 class Cell:
     def __init__(self, x, y, side_len):
@@ -106,20 +106,3 @@ class Grid:
         return x, y
 
 
-class Entity():
-
-    def __init__(self, grid, pos, eid):
-        self.eid = eid
-        self._grid = grid
-        self._cell = None
-        self.set_pos(pos)
-
-    def set_pos(self, new_pos):
-        self._pos = new_pos
-        self._grid.place_into_grid(self)
-
-    def __eq__(self, other):
-        return self.eid == other.eid
-
-    def get_nearby_entities(self, range_wu):
-        return filter(lambda e: e.eid != self.eid, self._grid.get_nearby_entities(self._pos, range_wu))

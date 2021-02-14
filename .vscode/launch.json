@@ -5,6 +5,12 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Run Soup",
+            "type": "python",
+            "request": "launch",
+            "module": "src.soup.soup.run"
+        },
+        {
             "name": "XOR Test",
             "type": "python",
             "request": "launch",
