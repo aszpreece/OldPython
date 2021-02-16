@@ -6,7 +6,7 @@ class Cell:
     def __init__(self, x, y, side_len):
         self.x = x
         self.y = y
-
+        self.selected= False
         self.entities = []
 
 
@@ -58,12 +58,17 @@ class Grid:
         # If the entity has just been placed in the grid it will have no _cell property.
         # If not we need to remove the entity from its old cell
         # If the entity has moved outside the bounds of the cell it should be in we need to remove it from the grid
-        if entity._cell is not None and (entity._cell.x != x or entity._cell.y != y):
-            self.remove_from_grid(entity)
 
-        # Once any removing has been done set the entities cell etc
-        entity._cell = self.cells[x][y]
-        entity._cell.entities.append(entity)
+
+        if entity._cell is None:
+            # This entity is new place into grid
+            entity._cell = self.cells[x][y]
+            entity._cell.entities.append(entity)
+        elif entity._cell.x != x or entity._cell.y != y:
+            self.remove_from_grid(entity)
+            # Once any removing has been done set the entities cell etc
+            entity._cell = self.cells[x][y]
+            entity._cell.entities.append(entity)
 
     def remove_from_grid(self, entity):
         entity._cell.entities.remove(entity)
@@ -87,13 +92,18 @@ class Grid:
         cbrx, cbry = self.world_coords_to_cell_coords(br)
 
         rs = range_wu**2
-        def range_filter(e):
-            return (e._pos - pos).magnitude_squared() <= rs
+        def range_filter(dist_entity_pair):
+            return dist_entity_pair[0] <= rs
+
+        def pair_dist_squared(e):
+            return (e._pos - pos).magnitude_squared(), e
 
         # Future optimization: use circle arithmetic to check if cell is in circle
         for y in range(ctly, cbry + 1):
             for x in range(ctlx, cbrx + 1):
-                yield from filter(range_filter, self.cells[x][y].entities)
+                self.cells[x][y].selected = True
+                yield from filter(range_filter, map(pair_dist_squared, self.cells[x][y].entities))
+                # old code no pair yield from filter(range_filter, self.cells[x][y].entities)
 
     def clamp_to_world_coords(self, pos):
         x = clamp(pos[0], 0, self.world_width)
@@ -106,3 +116,10 @@ class Grid:
         return x, y
 
 
+    # Mainly for debugging
+    def get_size(self):
+        count = 0
+        for x in self.cells:
+            for y in x:
+                count += len(y.entities)
+        return count

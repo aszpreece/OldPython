@@ -1,6 +1,6 @@
 class Component:
     c_type_id = -1
-    def __init__(self, name) -> None:
+    def __init__(self, name=None) -> None:
         self.name = name
         pass
 

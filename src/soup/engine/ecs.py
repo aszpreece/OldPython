@@ -9,6 +9,9 @@ class ECS:
         self.cindex = {}
         self.systems = []
         self._grid = Grid(world_width, world_height, wu_per_cell)
+        self.world_width = world_width
+        self.world_height = world_height
+        self.wu_per_cell = wu_per_cell
 
     def add_entity(self, pos=pg.Vector2(0, 0)):
         nid = self.next_entity_id
