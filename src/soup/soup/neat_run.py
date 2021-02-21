@@ -1,5 +1,6 @@
 
 from random import Random
+from src.soup.soup.components.controllers.camera_controller import CameraController
 import pygame as pg
 import matplotlib.pyplot as plt
 
@@ -37,7 +38,11 @@ if __name__ == '__main__':
         food_count = len(genotypes) * 9
 
         manager = ecs.ECS(world_width, world_height, 10)
-        manager.add_entity(pos=pg.Vector2(0, 0)).attach(Camera(4))
+        manager.add_entity(pos=pg.Vector2(0, 0)) \
+            .attach(Camera(4)) \
+            .attach(CameraController(0.1)) \
+            .attach(Velocity()) \
+            .attach(Friction(1, coef_f=0.01)) \
 
         rand = Random()
         critters = []
@@ -155,8 +160,7 @@ if __name__ == '__main__':
         axarr[1].set(title=f"Score histogram generation: {neat.generation_num}",
                         xlabel='Pellets Eaten', ylabel='Critters')
         axarr[1].hist(critter_scores_history[neat.generation_num - 1], bins=20)
-        axarr[1].legend(
-            ["Nodes", "Connections", "Enabled Connections"])
+
         pass
 
         fig.canvas.draw()

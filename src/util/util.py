@@ -14,3 +14,4 @@ def angle_between_points(v1, v2):
 
 def get_acceleration_delta(angle, amount):
     return pg.Vector2(math.cos(math.radians(angle)), -math.sin(math.radians(angle))) * amount
+
