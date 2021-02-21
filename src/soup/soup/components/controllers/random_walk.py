@@ -12,5 +12,5 @@ class RandomWalk(Controller):
 
     def update(self, entity):
         vel = entity.get_component_by_name('velocity')
-        vel.vel += pg.Vector2(math.cos(entity._rot), math.sin(entity._rot)) * 0.005
+        vel.vel += pg.Vector2(math.cos(math.radians(entity._rot)), math.sin(math.radians(entity._rot))) * self.v_acceleration * 0.005
         vel.rot_v += (self.rand.random() -0.5) * 0.01

@@ -11,6 +11,12 @@
             "module": "src.soup.soup.run"
         },
         {
+            "name": "Run NEAT Soup",
+            "type": "python",
+            "request": "launch",
+            "module": "src.soup.soup.neat_run"
+        },
+        {
             "name": "XOR Test",
             "type": "python",
             "request": "launch",

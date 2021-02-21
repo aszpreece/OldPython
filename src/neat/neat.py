@@ -11,7 +11,7 @@ import copy
 import math
 
 
-from src.neat.genotype import ConnectionGene, Genotype, NodeGene, NodeType
+from src.neat.genotype import ConnectionGene, Genotype, NodeGene, NodeType, generate_perceptron_connections
 
 
 class NEAT:
@@ -42,9 +42,16 @@ class NEAT:
             self.config.reproduction.reproduce(
                 self.population, self.species, self.config)
         else:
-            for i in range(self.config.generation_size):
-                genotype_copy = copy.deepcopy(self.config.base_genotype)
-                self.population.add_member(genotype_copy)
+            if self.config.initial_seeding_style == 'homogenous':
+                for i in range(self.config.generation_size):
+                    genotype_copy = self.config.base_genotype.copy()
+                    self.population.add_member(genotype_copy)
+            elif self.config.initial_seeding_style == 'random':
+                rand = Random()
+                for i in range(self.config.generation_size):
+                    genotype_copy = self.config.base_genotype.copy()
+                    generate_perceptron_connections(genotype_copy, rand, chance_to_generate=0.8)
+                    self.population.add_member(genotype_copy)
 
         self.adjust_compatibility()
         self.cycle_species()
@@ -54,11 +61,17 @@ class NEAT:
 
         self.population.total_fitness = 0
         self.population.total_adjusted_fitness = 0
+
+        if self.config.fitness_function_type == 'population':
+            self.config.fitness_function(self.population.population)
+        
         for genotype in self.population.population:
 
-            score = self.config.fitness_function(genotype)
-            genotype.fitness = score
-            genotype.adjusted_fitness = score / genotype.species.count()
+            if self.config.fitness_function_type == 'individual':
+                genotype.fitness = self.config.fitness_function(genotype)
+
+            genotype.adjusted_fitness =  genotype.fitness / genotype.species.count()
+
             self.population.total_fitness += genotype.fitness
             self.population.total_adjusted_fitness += genotype.adjusted_fitness
 
@@ -87,7 +100,7 @@ class NEAT:
         Args:
             genotype (Genotype): Genotype to place into species
         """
-        #
+        
         for genotype in self.population.population:
             for species_id, species in self.species.items():
                 assert species.prototype is not None

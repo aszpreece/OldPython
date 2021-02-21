@@ -1,21 +1,10 @@
 
-import random
-import math
-from src.neat.mutate import DefaultMutationManager
-from src.neat.reproduction import DefaultReproductionManager, ReproductionManager
-from src.neat.neat_config import NeatConfig
-from typing import List, Tuple
 
-# from matplotlib import pyplot as plt
-from matplotlib.pyplot import title, xlabel, ylabel
+from src.neat.neat_config import NeatConfig
 from src.neat.neat import NEAT
-from src.neat.phenotype import Phenotype
-from src.neat.genotype import ConnectionGene, Genotype, NodeGene, NodeType, mod_sigmoid, relu, sigmoid
-from src.ui.graphnetwork import create_graph
 import numpy as np
 
 import logging
-import pickle
 from typing import List, Tuple
 
 

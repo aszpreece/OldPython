@@ -22,7 +22,7 @@ class FrictionSystem(System):
             vel.vel -= delta_vel
 
             delta_rot_v = vel.rot_v * normal_force * fric.coef_f
-            if abs(vel.rot_v < delta_rot_v):
+            if abs(vel.rot_v) < abs(delta_rot_v):
                 vel.rot_v  = 0
             else:
                 vel.rot_v  -= delta_rot_v

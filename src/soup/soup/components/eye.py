@@ -1,4 +1,3 @@
-import pygame as pg
 from src.soup.engine.component import Component
 
 class Eye(Component):
@@ -7,7 +6,7 @@ class Eye(Component):
 
     def __init__(self, angle, eye_range, fov, power_multiplier,name=None):
         super().__init__(name)
-        self.angle = angle
+        self.angle = angle % 360
         self.eye_range = eye_range
         self.activation = 0
         self.fov = fov

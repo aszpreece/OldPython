@@ -11,7 +11,7 @@ import logging
 class MutationManager:
 
     def __init__(self,  initial_genome: Genotype) -> None:
-        self.connection_innovation_number = max(map(lambda c: c.innov_id, initial_genome.connection_genes))
+        self.connection_innovation_number = max(map(lambda c: c.innov_id, initial_genome.connection_genes), default=0)
         self.node_innovation_number = max(map(lambda c: c.innov_id, initial_genome.node_genes))
 
     def cycle(self):

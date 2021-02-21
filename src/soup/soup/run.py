@@ -1,3 +1,4 @@
+from src.soup.soup.components.controllers.rotate_test import RotateTest
 from src.soup.soup.components.controllers.cursor import Cursor
 from src.soup.soup.system.eye_system import EyeSystem
 from src.soup.engine.builtin.system.controller_system import ControllerSystem
@@ -34,17 +35,29 @@ if __name__ == '__main__':
             .attach(Friction(1, 0.001)) \
             #.attach(RandomWalk())
     
-    manager.add_entity(pos=pg.Vector2(50, 50)) \
-        .attach(Eye(0, 100, 10, 1)) \
+    manager.add_entity(pos=pg.Vector2(50, 50), rot=180) \
+        .attach(Eye(-30, 20, 30, 1, name='left')) \
+        .attach(Eye(30, 20, 30, 1, name='right')) \
         .attach(Circle(2, (255, 0, 0), True)) \
-        .attach(Friction(1, 0.01)) \
         .attach(Velocity()) \
+        .attach(RotateTest()) \
+        .attach(Friction(1, 0.01)) \
    #     .attach(RandomWalk())
 
 
-    manager.add_entity(pos=pg.Vector2(50, 50)) \
-        .attach(Cursor(manager)) \
-        .attach(Circle(1.5, (100, 240, 0), True))
+    manager.add_entity(pos=pg.Vector2(60, 60)) \
+        .attach(Circle(1.5, (100, 240, 0), True)) \
+    
+    manager.add_entity(pos=pg.Vector2(40, 60)) \
+        .attach(Circle(1.5, (100, 240, 0), True)) \
+        #.attach(Cursor(manager)) \
+
+    manager.add_entity(pos=pg.Vector2(60, 40)) \
+        .attach(Circle(1.5, (100, 240, 0), True)) \
+
+        
+    manager.add_entity(pos=pg.Vector2(40, 40)) \
+        .attach(Circle(1.5, (100, 240, 0), True)) \
 
     manager.add_system(ControllerSystem(manager))
     manager.add_system(FrictionSystem(manager))

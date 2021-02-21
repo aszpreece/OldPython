@@ -42,8 +42,11 @@ class Phenotype:
 
         # Set the genome's phenotype
         genome.phenotype = self
+        
+        self.new_inputs = {}
+        self.node_name_map = genome.node_name_map
 
-    def calculate(self, inputs: "dict[int, float]"):
+    def calculate(self, inputs: "dict[int, float]"=None):
         """Calculate a cycle of this network
 
         Args:
@@ -52,8 +55,11 @@ class Phenotype:
         Returns:
             dict[int, float]: A dictionary of the output nodes and their activation values
         """
-        new_activations = {}
 
+        if inputs is None:
+            inputs = self.new_inputs
+
+        new_activations = {}
         # Initialize the input nodes with the given activations
         for key, activation in inputs.items():
             new_activations[key] = activation
@@ -68,6 +74,17 @@ class Phenotype:
 
         self.node_activations = new_activations
 
+        self.new_inputs.clear()
+
         return dict([
             (output_node, self.node_activations[output_node]) for output_node in self.output_nodes
         ])
+
+    def set(self, key: str, value):
+        node_id = self.node_name_map[key] 
+        self.new_inputs[node_id] = value
+
+    def get(self, key: str):
+        node_id = self.node_name_map[key] 
+        return self.node_activations[node_id]
+    

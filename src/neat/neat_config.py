@@ -1,4 +1,5 @@
 from random import Random
+from typing import Literal, Union
 from src.neat.genotype import sigmoid
 
 
@@ -32,7 +33,9 @@ class NeatConfig():
                  prob_inherit_from_fitter=0.5,
                  prob_crossover=0.0,
                  weight_random_type='gaussian',
-                 run_id=''
+                 run_id='',
+                 fitness_function_type: Union[Literal['population'], Literal['individual']] ='individual', # individual or population
+                 initial_seeding_style: Union[Literal['homogenous'], Literal['random']] = 'homogenous', # homogenous means the initial population are all the same. if they are random, then each one is set to be a randomly generated perceptron
                  ):
 
         self.reproduction = reproduction
@@ -78,6 +81,8 @@ class NeatConfig():
 
         self.weight_random_type = weight_random_type
         self.run_id = run_id
+        self.fitness_function_type = fitness_function_type
+        self.initial_seeding_style = initial_seeding_style
 
     def get_weight_delta(self) -> float:
         if self.weight_random_type == 'uniform':
