@@ -1,5 +1,6 @@
 
 from random import Random
+from src.soup.soup.system.food_system import FoodSystem
 from src.soup.soup.components.controllers.camera_controller import CameraController
 import pygame as pg
 import matplotlib.pyplot as plt
@@ -65,18 +66,12 @@ if __name__ == '__main__':
             # Log the this genome's entity
             critters.append(critter)
 
-        for food in range(food_count):
-            x = rand.randrange(0, world_width)
-            y = rand.randrange(0, world_height)
-            manager.add_entity(pos=pg.Vector2(x, y)) \
-                .attach(Circle(0.5, (100, 240, 0), True)) \
-                .attach(Eatable())
-
         manager.add_system(ControllerSystem(manager))
         manager.add_system(FrictionSystem(manager))
         manager.add_system(Movement(manager))
         manager.add_system(EyeSystem(manager))
         manager.add_system(MouthSystem(manager))
+        manager.add_system(FoodSystem(manager, food_count, 6))
 
         time_delay = round(1000.0/60)
         time_delay = 0

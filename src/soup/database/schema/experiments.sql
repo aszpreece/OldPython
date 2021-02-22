@@ -1,0 +1,6 @@
+CREATE TABLE IF NOT EXISTS experiments (
+    id INTEGER NOT NULL AUTO_INCREMENT,
+    alias VARCHAR(30) NOT NULL,
+    exp_status VARCHAR(5) NOT NULL,
+    PRIMARY KEY (id)
+);
