@@ -3,8 +3,8 @@ CREATE TABLE IF NOT EXISTS critters(
     experiment_id INTEGER NOT NULL,
     generation INTEGER NOT NULL,
     species_id INTEGER NOT NULL,
-    food_eaten NUMBER,
-    fitness NUMBER,
-    adjusted_fitness NUMBER,
-    PRIMARY KEY (critter_id, experiment_id, generation)
+    food_eaten FLOAT,
+    fitness FLOAT,
+    adjusted_fitness FLOAT,
+    CONSTRAINT pk_CritterId PRIMARY KEY (critter_id, experiment_id)
 );

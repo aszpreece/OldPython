@@ -132,3 +132,6 @@ genomes/*
 results/*
 
 old
+
+# Security reasons
+*.cnf
