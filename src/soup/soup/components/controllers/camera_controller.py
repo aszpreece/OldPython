@@ -2,12 +2,13 @@ import pygame as pg
 
 from src.soup.soup.components.controller import Controller
 
+
 class CameraController(Controller):
-    def __init__(self, camera_acceleration = 0.01):
+    def __init__(self, camera_acceleration=0.01):
         super().__init__()
         self.camera_acceleration = camera_acceleration
 
-    def update(self, entity):   
+    def update(self, entity):
         vel = entity.get_component_by_name('velocity')
         cam = entity.get_component_by_name('camera')
         if vel is None:
@@ -27,4 +28,3 @@ class CameraController(Controller):
             cam.zoom += 1
         elif pressed[pg.K_x]:
             cam.zoom -= 1
-        

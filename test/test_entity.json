@@ -1,0 +1,77 @@
+{
+    "components": [
+        {
+            "class": "Velocity",
+            "module": "src.soup.engine.builtin.component",
+            "data": {
+                "name": "velocity"
+            }
+        },
+        {
+            "class": "Circle",
+            "module": "src.soup.engine.builtin.component",
+            "data": {
+                "radius": 1,
+                "colour": [
+                    100,
+                    100,
+                    100
+                ],
+                "forward_line": false
+            }
+        },
+        {
+            "class": "Friction",
+            "module": "src.soup.engine.builtin.component",
+            "data": {
+                "mass": 1,
+                "coef_f": 0.001
+            }
+        },
+        {
+            "class": "Eye",
+            "module": "src.soup.engine.builtin.component",
+            "data": {
+                "angle": -30,
+                "eye_range": 8,
+                "fov": 30,
+                "power_multiplier": 1,
+                "name": "eyeL"
+            }
+        },
+        {
+            "class": "Eye",
+            "module": "src.soup.engine.builtin.component",
+            "data": {
+                "angle": 30,
+                "eye_range": 8,
+                "fov": 30,
+                "power_multiplier": 1,
+                "name": "eyeR"
+            }
+        }
+    ],
+    "brain": {
+        "type": "NeatBrain",
+        "inputs": [
+            {
+                "name": "eyeL",
+                "from": "eyeL"
+            },
+            {
+                "name": "eyeR",
+                "from": "eyeR"
+            }
+        ],
+        "outputs": [
+            {
+                "from": "vel",
+                "to": "vel"
+            },
+            {
+                "from": "rot_v",
+                "to": "rot_v"
+            }
+        ]
+    }
+}
