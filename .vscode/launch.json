@@ -5,6 +5,12 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Run Soup JSON",
+            "type": "python",
+            "request": "launch",
+            "module": "src.soup.soup.neat_json"
+        },
+        {
             "name": "Run Soup",
             "type": "python",
             "request": "launch",

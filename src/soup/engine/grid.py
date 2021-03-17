@@ -2,11 +2,12 @@ import math
 import pygame as pg
 from src.util.util import clamp
 
+
 class Cell:
     def __init__(self, x, y, side_len):
         self.x = x
         self.y = y
-        self.selected= False
+        self.selected = False
         self.entities = []
 
 
@@ -59,7 +60,6 @@ class Grid:
         # If not we need to remove the entity from its old cell
         # If the entity has moved outside the bounds of the cell it should be in we need to remove it from the grid
 
-
         if entity._cell is None:
             # This entity is new place into grid
             entity._cell = self.cells[x][y]
@@ -92,6 +92,7 @@ class Grid:
         cbrx, cbry = self.world_coords_to_cell_coords(br)
 
         rs = range_wu**2
+
         def range_filter(dist_entity_pair):
             return dist_entity_pair[0] <= rs
 
@@ -115,8 +116,8 @@ class Grid:
         y = clamp(pos[1], 0, self.grid_height - 1)
         return x, y
 
-
     # Mainly for debugging
+
     def get_size(self):
         count = 0
         for x in self.cells:

@@ -1,7 +1,7 @@
 import math
 import pygame as pg
 from random import Random
-from src.soup.engine.builtin.component import Camera
+from src.soup.soup.components import Camera
 
 from src.soup.soup.components.controller import Controller
 

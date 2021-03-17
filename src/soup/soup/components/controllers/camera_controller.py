@@ -4,9 +4,12 @@ from src.soup.soup.components.controller import Controller
 
 
 class CameraController(Controller):
-    def __init__(self, camera_acceleration=0.01):
-        super().__init__()
-        self.camera_acceleration = camera_acceleration
+
+    default_attr = {'camera_acceleration': 0.01}
+    required_atrr = set()
+
+    def __init__(self, arg_dict):
+        super().__init__(arg_dict)
 
     def update(self, entity):
         vel = entity.get_component_by_name('velocity')

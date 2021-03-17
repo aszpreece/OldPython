@@ -1,6 +1,7 @@
 from src.soup.engine.system import System
-from src.soup.engine.builtin.component import Velocity, Friction
+from src.soup.soup.components import Velocity, Friction
 import pygame as pg
+
 
 class FrictionSystem(System):
 
@@ -23,9 +24,9 @@ class FrictionSystem(System):
 
             delta_rot_v = vel.rot_v * normal_force * fric.coef_f
             if abs(vel.rot_v) < abs(delta_rot_v):
-                vel.rot_v  = 0
+                vel.rot_v = 0
             else:
-                vel.rot_v  -= delta_rot_v
+                vel.rot_v -= delta_rot_v
 
     def apply(self):
         pass
@@ -34,6 +35,6 @@ class FrictionSystem(System):
     #         vel_l = vs.get_components(Velocity.c_type_id)
     #         if (len(vel_l) > 1):
     #             raise Exception('Entity cannot more than one velocity component')
-            
+
     #         [vel] = vel_l
     #         vs.set_pos(vel.new)

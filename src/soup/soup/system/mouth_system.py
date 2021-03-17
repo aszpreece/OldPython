@@ -1,7 +1,8 @@
 import math
 from src.soup.engine.system import System
 from src.soup.soup.components import Mouth, Eatable
-from src.soup.engine.builtin.component import Circle
+from src.soup.soup.components import Circle
+
 
 class MouthSystem(System):
 

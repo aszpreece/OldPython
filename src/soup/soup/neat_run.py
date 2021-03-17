@@ -15,10 +15,10 @@ from src.neat.neat import NEAT
 from src.neat.neat_config import NeatConfig
 from src.neat.phenotype import Phenotype
 from src.neat.reproduction import DefaultReproductionManager
-from src.soup.engine.builtin.component import Camera, Circle, Friction
-from src.soup.engine.builtin.system import (FrictionSystem, Movement, Render,
-                                            Velocity)
-from src.soup.engine.builtin.system.controller_system import ControllerSystem
+from src.soup.soup.components import Camera, Circle, Friction, Velocity
+from src.soup.soup.system import (FrictionSystem, MovementSystem, Render,
+                                  VelocitySystem, ControllerSystem)
+
 from src.soup.soup.components import Eye
 from src.soup.soup.components.controllers.cursor import Cursor
 from src.soup.soup.components.controllers.neat_brain import NeatBrain
@@ -40,8 +40,7 @@ if __name__ == '__main__':
 
         manager = ecs.ECS(world_width, world_height, 10)
         manager.add_entity(pos=pg.Vector2(0, 0)) \
-            .attach(Camera(4)) \
-            .attach(CameraController(0.1)) \
+            .attach(Camera()) \
             .attach(Velocity()) \
             .attach(Friction(1, coef_f=0.01)) \
 
@@ -68,7 +67,7 @@ if __name__ == '__main__':
 
         manager.add_system(ControllerSystem(manager))
         manager.add_system(FrictionSystem(manager))
-        manager.add_system(Movement(manager))
+        manager.add_system(MovementSystem(manager))
         manager.add_system(EyeSystem(manager))
         manager.add_system(MouthSystem(manager))
         manager.add_system(FoodSystem(manager, food_count, 6))
@@ -77,7 +76,7 @@ if __name__ == '__main__':
         time_delay = 0
         screen = pg.display.set_mode((1000, 1000))
         pg.display.set_caption('Soup')
-        
+
         manager.add_system(Render(manager, screen))
 
         # 60 ticks per second, so to run for 30 seconds = 30 * 60
@@ -88,7 +87,7 @@ if __name__ == '__main__':
             manager.update()
             pg.display.flip()
             # pg.time.delay(time_delay)  # 1 second == 1000 milliseconds
-        
+
         pg.display.quit()
         pg.quit()
 
@@ -110,7 +109,6 @@ if __name__ == '__main__':
     base_genotype.add_input('eyeR')
     base_genotype.add_output('v_accel', sigmoid)
     base_genotype.add_output('r_accel', sigmoid)
-    
 
     config = NeatConfig(
         activation_func=sigmoid,
@@ -121,7 +119,7 @@ if __name__ == '__main__':
         mutation_manager=DefaultMutationManager(base_genotype),
         species_target=10,
         species_mod=0.1,
-        prob_crossover=0, #0.8,
+        prob_crossover=0,  # 0.8,
         weight_perturb_scale=1,
         new_weight_power=0.8,
         sim_disjoint_weight=1.0,
@@ -143,21 +141,22 @@ if __name__ == '__main__':
     plt.subplots_adjust(wspace=0.5, hspace=1)
     fig.show()
     fig.canvas.draw()
-     
+
     def result_func(neat):
-        
+
         axarr[0].clear()
         axarr[0].set(title=f"Food eaten",
-                        xlabel='Generation', ylabel='Pellets Eaten')
+                     xlabel='Generation', ylabel='Pellets Eaten')
         axarr[0].plot(food_eaten_history)
 
         axarr[1].clear()
         axarr[1].set(title=f"Score histogram generation: {neat.generation_num}",
-                        xlabel='Pellets Eaten', ylabel='Critters')
+                     xlabel='Pellets Eaten', ylabel='Critters')
         axarr[1].hist(critter_scores_history[neat.generation_num - 1], bins=20)
 
         pass
 
         fig.canvas.draw()
 
-    train_neat(fitness_func=fitness_function, result_func=result_func, config=config)    
+    train_neat(fitness_func=fitness_function,
+               result_func=result_func, config=config)

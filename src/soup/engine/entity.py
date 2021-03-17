@@ -28,7 +28,7 @@ class Entity():
         if component.name:
             if component.name in self._components_by_name:
                 raise Exception(
-                    'Cannot attach two components with the same name.')
+                    f'Cannot attach two components with the same name: {component.name}.')
             self._components_by_name[component.name] = component
         self.ecs.attach(self.eid, component)
         return self
@@ -48,21 +48,23 @@ class Entity():
     def __hash__(self):
         return hash(self.eid)
 
-    def from_json(self, entity_json):
-        data = json.loads(entity_json)
+    def from_dict(self, data):
         for component in data['components']:
             self.attach(load_component(component))
+        return self
 
     def set_value(self, name, value):
-        [component, property] = name.split('.')
-        if hasattr(self.get_component_by_name(component), property):
+        [component_name, property] = name.split('.')
+        component = self.get_component_by_name(component_name)
+        if hasattr(component, property):
             setattr(component, property, value)
         else:
             raise ValueError('Given value does not exist.')
 
     def get_value(self, name):
-        [component, property] = name.split('.')
-        if hasattr(self.get_component_by_name(component), property):
+        [component_name, property] = name.split('.')
+        component = self.get_component_by_name(component_name)
+        if hasattr(component, property):
             return getattr(component, property)
         else:
             raise ValueError('Given value does not exist.')

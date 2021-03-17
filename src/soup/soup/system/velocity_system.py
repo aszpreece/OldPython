@@ -1,7 +1,8 @@
 from src.soup.engine.system import System
-from src.soup.engine.builtin.component.velocity import Velocity
+from src.soup.soup.components.velocity import Velocity
 
-class Movement(System):
+
+class VelocitySystem(System):
 
     def __init__(self, ecs, bounce_edges=True):
         super().__init__(ecs)
@@ -13,7 +14,7 @@ class Movement(System):
             old_rot = vs._rot
 
             vel = vs.get_component_by_name('velocity')
-      
+
             vel.new_pos = old_pos + vel.vel
             vel.new_rot = old_rot + vel.rot_v
 
@@ -24,7 +25,7 @@ class Movement(System):
                 if vel.new_pos.x > self.ecs.world_width:
                     vel.new_pos.x = self.ecs.world_width
                     vel.vel.x = -vel.vel.x
-                
+
                 if vel.new_pos.y < 0:
                     vel.new_pos.y = 0
                     vel.vel.y = -vel.vel.y
@@ -32,13 +33,13 @@ class Movement(System):
                     vel.new_pos.y = self.ecs.world_height
                     vel.vel.y = -vel.vel.y
 
-
     def apply(self):
         for vs in self.ecs.cindex.get(Velocity.c_type_id, []):
             vel_l = vs.get_components(Velocity.c_type_id)
             if (len(vel_l) > 1):
-                raise Exception('Entity cannot more than one velocity component')
-            
+                raise Exception(
+                    'Entity cannot more than one velocity component')
+
             [vel] = vel_l
             vs.set_pos(vel.new_pos)
             vs.set_rot(vel.new_rot)

@@ -1,14 +1,14 @@
+from src.soup.soup.system.velocity_system import VelocitySystem
 from src.soup.soup.components.controllers.rotate_test import RotateTest
 from src.soup.soup.components.controllers.cursor import Cursor
 from src.soup.soup.system.eye_system import EyeSystem
-from src.soup.engine.builtin.system.controller_system import ControllerSystem
+from src.soup.soup.system import ControllerSystem, sound_system
 import unittest
 import pygame as pg
 import src.soup.engine.ecs as ecs
 from src.soup.soup.components.controllers.random_walk import RandomWalk
-from src.soup.soup.components import Eye
-from src.soup.engine.builtin.component import Camera, Circle, Friction
-from src.soup.engine.builtin.system import Movement, Render, Velocity, FrictionSystem
+from src.soup.soup.components import Camera, Circle, Friction, Eye, Speaker, Ear
+from src.soup.soup.system import MovementSystem, Render, Velocity, FrictionSystem, SoundSystem
 from random import Random
 
 if __name__ == '__main__':
@@ -17,52 +17,65 @@ if __name__ == '__main__':
     world_height = 100
 
     manager = ecs.ECS(world_width, world_height, 10)
-    manager.add_entity(pos=pg.Vector2(0, 0)).attach(Camera(4))
+    manager.add_entity(pos=pg.Vector2(0, 0)).attach(Camera({}))
 
-    rand = Random()
-    for i in range(100):
-        x = rand.randrange(0, 30)
-        y = rand.randrange(0, 30)
-        x = 0
-        y = 0
-        vx = 2 * rand.random() - 1
-        vy = 2 * rand.random() - 1
-        vx = 0
-        vy = 0
-        manager.add_entity(pos=pg.Vector2(x, y)) \
-            .attach(Circle(1, (100, 100, 100))) \
-            .attach(Velocity(pg.Vector2(vx, vy) * 2, 1)) \
-            .attach(Friction(1, 0.001)) \
-            #.attach(RandomWalk())
-    
+    # rand = Random()
+    # for i in range(100):
+    #     x = rand.randrange(0, 30)
+    #     y = rand.randrange(0, 30)
+    #     x = 0
+    #     y = 0
+    #     vx = 2 * rand.random() - 1
+    #     vy = 2 * rand.random() - 1
+    #     vx = 0
+    #     vy = 0
+    #     manager.add_entity(pos=pg.Vector2(x, y)) \
+    #         .attach(Circle(1, (100, 100, 100))) \
+    #         .attach(Velocity(pg.Vector2(vx, vy) * 2, 1)) \
+    #         .attach(Friction(1, 0.001)) \
+    #         # .attach(RandomWalk())
+
     manager.add_entity(pos=pg.Vector2(50, 50), rot=180) \
-        .attach(Eye(-30, 20, 30, 1, name='left')) \
-        .attach(Eye(30, 20, 30, 1, name='right')) \
-        .attach(Circle(2, (255, 0, 0), True)) \
-        .attach(Velocity()) \
-        .attach(RotateTest()) \
-        .attach(Friction(1, 0.01)) \
-   #     .attach(RandomWalk())
-
+        .attach(Circle({'radius': 2, 'colour': (255, 0, 0), 'forward_line': True}
+                       )) \
+        .attach(Velocity({'name': 'velocity'})) \
+        .attach(RotateTest({})) \
+        .attach(Friction({'mass': 1, 'coef_f': 0.01})) \
+        .attach(Speaker({'frequency': 100,
+                         'max_amplitude': 10,
+                         'max_range': 20,
+                         'activation': 100
+                         })) \
+        # .attach(Eye({'angle': 30, 'eye_range': 20, 'fov': 30, 'power_multiplier': 1, 'name': 'right'}
+    #             )) \
+    # .attach(Eye({'angle': -30, 'eye_range': 20, 'fov': 30, 'power_multiplier': 1, 'name': 'left'}
+    #             )) \
 
     manager.add_entity(pos=pg.Vector2(60, 60)) \
-        .attach(Circle(1.5, (100, 240, 0), True)) \
-    
+        .attach(Circle({'radius': 1.5, 'colour': (100, 240, 0), 'forward_line': True}
+                       )) \
+        .attach(Ear({'angle': 0, 'fov': 30}))
+
     manager.add_entity(pos=pg.Vector2(40, 60)) \
-        .attach(Circle(1.5, (100, 240, 0), True)) \
-        #.attach(Cursor(manager)) \
+        .attach(Circle({'radius': 1.5, 'colour': (100, 240, 0), 'forward_line': True}
+                       )) \
+        .attach(Ear({'angle': 0, 'fov': 30}))
 
     manager.add_entity(pos=pg.Vector2(60, 40)) \
-        .attach(Circle(1.5, (100, 240, 0), True)) \
+        .attach(Circle({'radius': 1.5, 'colour': (100, 240, 0), 'forward_line': True}
+                       )) \
+        .attach(Ear({'angle': 0, 'fov': 30}))
 
-        
     manager.add_entity(pos=pg.Vector2(40, 40)) \
-        .attach(Circle(1.5, (100, 240, 0), True)) \
+        .attach(Circle({'radius': 1.5, 'colour': (100, 240, 0), 'forward_line': True}
+                       )) \
+        .attach(Ear({'angle': 0, 'fov': 30}))
 
     manager.add_system(ControllerSystem(manager))
     manager.add_system(FrictionSystem(manager))
-    manager.add_system(Movement(manager))
+    manager.add_system(VelocitySystem(manager))
     manager.add_system(EyeSystem(manager))
+    manager.add_system(SoundSystem(manager))
 
     time_delay = round(1000.0/60)
     screen = pg.display.set_mode((800, 600))
@@ -75,6 +88,6 @@ if __name__ == '__main__':
         manager.update()
         pg.display.flip()
         pg.time.delay(time_delay)  # 1 second == 1000 milliseconds
-        
+
     pygame.display.quit()
     pygame.quit()

@@ -1,6 +1,6 @@
 
 from src.soup.engine.component import Component
-from src.soup.engine.builtin.component.velocity import Velocity
+from src.soup.soup.components.velocity import Velocity
 import src.soup.engine.ecs as ecs
 import json
 import pygame as pg
@@ -110,7 +110,7 @@ class TestComponentDictInit(unittest.TestCase):
             'components': [
                 {
                     'class': 'Velocity',
-                    'module': 'src.soup.engine.builtin.component.velocity',
+                    'module': 'src.soup.soup.components.velocity',
                     'data': {
                         'name': 'velocity',
                         'vel': (0, 0),

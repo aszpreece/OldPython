@@ -2,14 +2,12 @@
     "components": [
         {
             "class": "Velocity",
-            "module": "src.soup.engine.builtin.component",
             "data": {
                 "name": "velocity"
             }
         },
         {
             "class": "Circle",
-            "module": "src.soup.engine.builtin.component",
             "data": {
                 "radius": 1,
                 "colour": [
@@ -22,56 +20,120 @@
         },
         {
             "class": "Friction",
-            "module": "src.soup.engine.builtin.component",
             "data": {
                 "mass": 1,
-                "coef_f": 0.001
+                "coef_f": 0.01
             }
         },
         {
             "class": "Eye",
-            "module": "src.soup.engine.builtin.component",
             "data": {
                 "angle": -30,
                 "eye_range": 8,
                 "fov": 30,
                 "power_multiplier": 1,
-                "name": "eyeL"
+                "name": "left_eye"
             }
         },
         {
             "class": "Eye",
-            "module": "src.soup.engine.builtin.component",
             "data": {
                 "angle": 30,
                 "eye_range": 8,
                 "fov": 30,
                 "power_multiplier": 1,
-                "name": "eyeR"
+                "name": "right_eye"
+            }
+        },
+        {
+            "class": "Ear",
+            "data": {
+                "angle": -90,
+                "fov": 85,
+                "name": "left_ear"
+            }
+        },
+        {
+            "class": "Ear",
+            "data": {
+                "angle": 90,
+                "fov": 85,
+                "name": "right_ear"
+            }
+        },
+        {
+            "class": "Movement",
+            "data": {
+                "name": "movement",
+                "max_a": 0.02,
+                "max_rot_a": 0.2,
+                "wish_acc": 0,
+                "wish_rot_v_a": 0
+            }
+        },
+        {
+            "class": "Mouth",
+            "data": {
+                "name": "mouth",
+                "mouth_range": 2.1,
+                "eaten_count": 0
+            }
+        },
+        {
+            "class": "RigidBody",
+            "data": {
+                "radius": 1
+            }
+        },
+        {
+            "class": "Speaker",
+            "data": {
+                "name": "sound_source",
+                "max_range": 15,
+                "max_amplitude": 10,
+                "frequency": 100
+            }
+        },
+        {
+            "class": "Brain",
+            "data": {
+                "name": "brain",
+                "inputs": [
+                    {
+                        "name": "left_eye",
+                        "from": "left_eye.activation"
+                    },
+                    {
+                        "name": "right_eye",
+                        "from": "right_eye.activation"
+                    },
+                    {
+                        "name": "left_ear",
+                        "from": "left_ear.activation"
+                    },
+                    {
+                        "name": "right_ear",
+                        "from": "right_ear.activation"
+                    }
+                ],
+                "outputs": [
+                    {
+                        "name": "wish_acceleration",
+                        "to": "movement.wish_acc",
+                        "function": "sigmoid"
+                    },
+                    {
+                        "name": "wish_rot_acc",
+                        "to": "movement.wish_rot_v_a",
+                        "function": "sigmoid"
+                    },
+                    {
+                        "name": "sound_output",
+                        "to": "sound_source.activation",
+                        "function": "relu"
+                    }
+                ]
             }
         }
-    ],
-    "brain": {
-        "type": "NeatBrain",
-        "inputs": [
-            {
-                "name": "eyeL",
-                "from": "eyeL"
-            },
-            {
-                "name": "eyeR",
-                "from": "eyeR"
-            }
-        ],
-        "outputs": [
-            {
-                "from": "vel",
-                "to": "vel"
-            },
-            {
-                "from": "rot_v",
-                "to": "rot_v"
-            }
-        ]
-    }
+    ]
 }

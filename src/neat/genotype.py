@@ -8,6 +8,7 @@ from typing import Deque, List, Optional, Set
 from src.neat.phenotype import Phenotype
 from random import Random
 
+
 def relu(x: float) -> float:
     if x < 0:
         return 0
@@ -16,7 +17,10 @@ def relu(x: float) -> float:
 
 
 def sigmoid(x: float) -> float:
-    return 1/(1+math.exp(-x))
+    if x < 0:
+        return math.exp(x)/(1+math.exp(x))
+    else:
+        return 1/(1+math.exp(-x))
 
 
 def mod_sigmoid(x: float) -> float:
@@ -24,6 +28,14 @@ def mod_sigmoid(x: float) -> float:
 
 
 def identity(x: float): return x
+
+
+activation_funcs = {
+    'sigmoid': sigmoid,
+    'relu': relu,
+    'mod_sigmoid': mod_sigmoid,
+    'identity': identity
+}
 
 
 class NodeGene:
@@ -136,22 +148,32 @@ class Genotype:
         self.node_genes.append(NodeGene(self.node_innov_start, NodeType.INPUT))
         self.node_name_map[name] = self.node_innov_start
 
-    
     def add_output(self, name: str, activation_func):
         self.node_innov_start += 1
-        self.node_genes.append(NodeGene(self.node_innov_start, NodeType.OUTPUT, activation_func=activation_func))
+        self.node_genes.append(NodeGene(
+            self.node_innov_start, NodeType.OUTPUT, activation_func=activation_func))
         self.node_name_map[name] = self.node_innov_start
+
+    def from_dict(self, node_dict):
+        for input in node_dict['data']['inputs']:
+            self.add_input(input['name'])
+        for output in node_dict['data']['outputs']:
+            self.add_output(
+                output['name'], activation_funcs[output['function']])
 
 
 def generate_perceptron_connections(genotype: Genotype, random: Random, mu=0, sigma=1.5, chance_to_generate=1.0):
     """
         Generates connections from every input to every output with a randomized weight controlled by mu and sigma.
     """
-    inputs = list(filter(lambda c: c.type == NodeType.INPUT, genotype.node_genes))
-    outputs = list(filter(lambda c: c.type == NodeType.OUTPUT, genotype.node_genes))
+    inputs = list(filter(lambda c: c.type ==
+                         NodeType.INPUT, genotype.node_genes))
+    outputs = list(filter(lambda c: c.type ==
+                          NodeType.OUTPUT, genotype.node_genes))
     innov = 0
     for i in inputs:
         for o in outputs:
             if random.random() < chance_to_generate:
-                genotype.connection_genes.append(ConnectionGene(innov, i.innov_id, o.innov_id, random.normalvariate(0, sigma)))
+                genotype.connection_genes.append(ConnectionGene(
+                    innov, i.innov_id, o.innov_id, random.normalvariate(0, sigma)))
                 innov += 1

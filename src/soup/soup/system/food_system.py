@@ -3,7 +3,8 @@ import pygame as pg
 
 from src.soup.engine.system import System
 from src.soup.soup.components import Mouth, Eatable
-from src.soup.engine.builtin.component import Circle
+from src.soup.soup.components import Circle
+
 
 class FoodSystem(System):
 
@@ -16,10 +17,10 @@ class FoodSystem(System):
             x = self.rand.randrange(0, self.ecs.world_width)
             y = self.rand.randrange(0, self.ecs.world_height)
             self.ecs.add_entity(pos=pg.Vector2(x, y)) \
-                .attach(Circle(0.5, (100, 240, 0), True)) \
-                .attach(Eatable())
-
-        
+                .attach(Circle(
+                    {'radius': 0.5, 'forward_line': False,
+                        'colour':  (100, 240, 0)}))\
+                .attach(Eatable({}))
 
     def update(self):
 
@@ -30,12 +31,13 @@ class FoodSystem(System):
             for i in range(food_to_spawn):
                 x = self.rand.randrange(0, self.ecs.world_width)
                 y = self.rand.randrange(0, self.ecs.world_height)
-                in_range = self.ecs._grid.get_nearby_entities(pg.Vector2(x, y), self.empty_range_to_spawn)
+                in_range = self.ecs._grid.get_nearby_entities(
+                    pg.Vector2(x, y), self.empty_range_to_spawn)
 
                 if not any(filter(lambda d_e_p: d_e_p[1].has_component(Mouth.c_type_id), in_range)):
                     self.ecs.add_entity(pos=pg.Vector2(x, y)) \
-                        .attach(Circle(0.5, (100, 240, 0), True)) \
-                        .attach(Eatable())
+                        .attach(Circle({'radius': 0.5, 'colour': (100, 100, 240), 'forward_line': True})) \
+                        .attach(Eatable({}))
 
     def apply(self):
         pass
