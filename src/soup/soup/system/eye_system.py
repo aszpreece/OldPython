@@ -1,4 +1,5 @@
 import math
+from src.neat.genotype import sigmoid
 
 from src.soup.engine.system import System
 from src.soup.soup.components import Eye
@@ -42,7 +43,8 @@ class EyeSystem(System):
                         # the max distance of
 
                         if dist_squared > 0:
-                            eye.activation += eye.power_multiplier * eye_range_sqrd/dist_squared
+                            eye.activation += sigmoid(eye.power_multiplier *
+                                                      eye_range_sqrd/dist_squared)
 
     def apply(self):
         pass

@@ -130,7 +130,7 @@
                     {
                         "name": "sound_output",
                         "to": "sound_source.activation",
-                        "function": "relu"
+                        "function": "relu_sig"
                     }
                 ]
             }

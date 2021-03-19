@@ -1,4 +1,5 @@
 import math
+from src.neat.genotype import sigmoid
 
 from src.soup.engine.system import System
 from src.soup.soup.components import Ear, Speaker
@@ -44,8 +45,8 @@ class SoundSystem(System):
                             # Activation is inverseley proportional to the square of the distance of the source from the ear
 
                             if dist_sqr > 0:
-                                ear.activation += speaker.max_amplitude * \
-                                    speaker.activation * angle_multiplier / dist_sqr
+                                ear.activation += sigmoid(speaker.max_amplitude * \
+                                    speaker.activation * angle_multiplier / dist_sqr)
 
     def apply(self):
         pass

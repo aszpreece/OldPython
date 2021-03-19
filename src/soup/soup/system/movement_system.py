@@ -3,6 +3,8 @@ from src.util.util import get_acceleration_delta
 from src.soup.engine.system import System
 from src.soup.soup.components import Movement, Velocity
 
+import math
+
 
 class MovementSystem(System):
 
@@ -16,11 +18,16 @@ class MovementSystem(System):
         for entity in movement & velocities:
             vel = entity.get_component_by_name('velocity')
             mov = entity.get_component_by_name('movement')
+            if math.isnan(vel.vel.x) or math.isnan(vel.vel.y):
+                print('foo')
 
             vel.vel += get_acceleration_delta(entity._rot,
                                               mov.max_a * mov.wish_acc)
 
             vel.rot_v += 2 * (mov.wish_rot_v_a - 0.5) * mov.max_rot_a
+
+            if math.isnan(vel.vel.x) or math.isnan(vel.vel.y):
+                print('foo')
 
     def apply(self):
         pass

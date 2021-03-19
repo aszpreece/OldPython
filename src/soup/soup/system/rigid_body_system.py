@@ -2,6 +2,7 @@ from src.util.util import angle_between_points, get_acceleration_delta
 
 from src.soup.engine.system import System
 from src.soup.soup.components import Movement, Velocity, RigidBody
+import math
 
 
 class RigidBodySystem(System):
@@ -28,8 +29,13 @@ class RigidBodySystem(System):
                     # find collision normal
                     vec = (interset_entity._pos - entity._pos)
                     if vec.length_squared() > 0:
+                        if math.isnan(vel.vel.x) or math.isnan(vel.vel.y):
+                            print('foo')
+
                         vel = entity.get_component_by_name('velocity')
                         vel.vel -= vec.normalize() * 0.01
+                        if math.isnan(vel.vel.x) or math.isnan(vel.vel.y):
+                            print('foo')
 
     def apply(self):
         pass

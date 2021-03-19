@@ -1,6 +1,7 @@
 from src.soup.engine.system import System
 from src.soup.soup.components import Velocity, Friction
 import pygame as pg
+import math
 
 
 class FrictionSystem(System):
@@ -18,10 +19,13 @@ class FrictionSystem(System):
             normal_force = fric.mass * self.gravity
             acceleration = fric.coef_f * normal_force
             vel = es.get_component_by_name('velocity')
+            if math.isnan(vel.vel.x) or math.isnan(vel.vel.y):
+                print('foo')
 
             delta_vel = vel.vel * acceleration
             vel.vel -= delta_vel
-
+            if math.isnan(vel.vel.x) or math.isnan(vel.vel.y):
+                print('foo')
             delta_rot_v = vel.rot_v * normal_force * fric.coef_f
             if abs(vel.rot_v) < abs(delta_rot_v):
                 vel.rot_v = 0

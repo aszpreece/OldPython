@@ -30,11 +30,32 @@ def mod_sigmoid(x: float) -> float:
 def identity(x: float): return x
 
 
+def relu_sig(x: float):
+    if x < 0:
+        return 0
+    else:
+        return 2/(1+math.exp(-x)) - 1
+
+
+def tanh(x: float):
+    return math.tanh(x)
+
+
+def binary(x: float):
+    if x <= 0:
+        return 0
+    else:
+        return 1
+
+
 activation_funcs = {
     'sigmoid': sigmoid,
     'relu': relu,
     'mod_sigmoid': mod_sigmoid,
-    'identity': identity
+    'identity': identity,
+    'binary': binary,
+    'tanh': tanh,
+    'relu_sig': relu_sig
 }
 
 

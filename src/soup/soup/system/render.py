@@ -4,7 +4,7 @@ import pygame.gfxdraw
 
 import math
 import src.soup.engine.system
-from src.soup.soup.components import Camera, Circle
+from src.soup.soup.components import Camera, Circle, Speaker
 from src.soup.soup.components.eye import Eye
 
 import math
@@ -12,6 +12,13 @@ import math
 
 def sigmoid(x):
     return 1 / (1 + math.exp(-x))
+
+
+def draw_circle_alpha(surface, color, center, radius):
+    target_rect = pygame.Rect(center, (0, 0)).inflate((radius * 2, radius * 2))
+    shape_surf = pygame.Surface(target_rect.size, pygame.SRCALPHA)
+    pygame.draw.circle(shape_surf, color, (radius, radius), radius)
+    surface.blit(shape_surf, target_rect)
 
 
 class Render(src.soup.engine.system.System):
@@ -29,9 +36,15 @@ class Render(src.soup.engine.system.System):
         self.screen.fill((100, 255, 255))
         # self.draw_grid(cm_comp.zoom)
         for circle in self.ecs.cindex.get(Circle.c_type_id, []):
+
             [circle_component] = circle.get_components(Circle.c_type_id)
 
             draw_pos = (circle._pos - offset) * cm_comp.zoom
+
+            for speaker in circle.get_components(Speaker.c_type_id):
+                draw_circle_alpha(self.screen, pygame.Color(
+                    255, 255, 0, round(100 - 100*speaker.activation)), draw_pos, speaker.max_range * cm_comp.zoom)
+
             pygame.draw.circle(self.screen, circle_component.colour,
                                draw_pos, circle_component.radius * cm_comp.zoom)
             if circle_component.forward_line:
@@ -68,7 +81,6 @@ class Render(src.soup.engine.system.System):
                 pygame.draw.arc(self.screen, colour, rect, math.radians(
                     start_angle), math.radians(end_angle), width=200)
 
-    # Draw the grid for debugging purposes
     def draw_grid(self, zoom):
         for x, ylist in enumerate(self.ecs._grid.cells):
             for y, cell in enumerate(ylist):

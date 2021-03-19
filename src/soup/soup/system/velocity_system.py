@@ -1,5 +1,6 @@
 from src.soup.engine.system import System
 from src.soup.soup.components.velocity import Velocity
+import math
 
 
 class VelocitySystem(System):
@@ -41,5 +42,7 @@ class VelocitySystem(System):
                     'Entity cannot more than one velocity component')
 
             [vel] = vel_l
+            if math.isnan(vel.new_pos.x) or math.isnan(vel.new_pos.y):
+                print('foo')
             vs.set_pos(vel.new_pos)
             vs.set_rot(vel.new_rot)

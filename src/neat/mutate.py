@@ -11,8 +11,10 @@ import logging
 class MutationManager:
 
     def __init__(self,  initial_genome: Genotype) -> None:
-        self.connection_innovation_number = max(map(lambda c: c.innov_id, initial_genome.connection_genes), default=0)
-        self.node_innovation_number = max(map(lambda c: c.innov_id, initial_genome.node_genes))
+        self.connection_innovation_number = max(
+            map(lambda c: c.innov_id, initial_genome.connection_genes), default=0)
+        self.node_innovation_number = max(
+            map(lambda c: c.innov_id, initial_genome.node_genes))
 
     def cycle(self):
         pass
@@ -124,9 +126,9 @@ class DefaultMutationManager(MutationManager):
             self.split_signatures[originalConnection.innov_id] = (
                 node_innov_id, from_innov_id, to_innov_id)
 
-        # Create a new node with a the innovation number
+        # Create a new node with the innovation number
         genotype.node_genes.append(NodeGene(node_innov_id,
-                                            NodeType.HIDDEN, activation_func=config.activation_func))
+                                            NodeType.HIDDEN, activation_func=config.neat_random.choice(config.activation_func)))
 
         # New connection from old source to new node with weight of 1.0 to reduce impact
         genotype.connection_genes.append(ConnectionGene(
@@ -254,6 +256,7 @@ class DefaultMutationManager(MutationManager):
         baby = Genotype()
 
         baby.node_genes = copy.deepcopy(fittest.node_genes)
+        baby.node_name_map = fittest.node_name_map
 
         fit_index = 0
         nfit_index = 0

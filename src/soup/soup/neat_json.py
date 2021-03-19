@@ -8,9 +8,9 @@ import matplotlib.pyplot as plt
 
 import src.soup.engine.ecs as ecs
 from experiment.run_experiment import train_neat
-from src.neat.genotype import (ConnectionGene, Genotype, NodeGene,
+from src.neat.genotype import (ConnectionGene, Genotype, NodeGene, binary,
                                generate_perceptron_connections, mod_sigmoid,
-                               sigmoid)
+                               sigmoid, tanh)
 from src.neat.mutate import DefaultMutationManager
 from src.neat.neat_config import NeatConfig
 from src.neat.phenotype import Phenotype
@@ -38,9 +38,10 @@ if __name__ == '__main__':
     def fitness_function(genotypes):
         world_width = 200
         world_height = 200
-        food_count = len(genotypes) * 9
+        wu_per_cell = 5
+        food_count = round(len(genotypes) * 1.5)
 
-        manager = ecs.ECS(world_width, world_height, 10)
+        manager = ecs.ECS(world_width, world_height, wu_per_cell)
         manager.add_entity(pos=pg.Vector2(0, 0)) \
             .attach(Camera({})) \
             .attach(CameraController({'camera_acceleration': 0.1})) \
@@ -110,7 +111,7 @@ if __name__ == '__main__':
         list(filter(lambda c: c['class'] == 'Brain', entity_data['components']))[0])
 
     config = NeatConfig(
-        activation_func=sigmoid,
+        activation_func=[sigmoid, binary, tanh],
         fitness_function=fitness_function,
         base_genotype=base_genotype,
         reproduction=DefaultReproductionManager(),
@@ -118,7 +119,7 @@ if __name__ == '__main__':
         mutation_manager=DefaultMutationManager(base_genotype),
         species_target=10,
         species_mod=0.1,
-        prob_crossover=0,  # 0.8,
+        prob_crossover=0.8,
         weight_perturb_scale=1,
         new_weight_power=0.8,
         sim_disjoint_weight=1.0,

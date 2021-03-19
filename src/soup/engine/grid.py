@@ -100,6 +100,8 @@ class Grid:
             return (e._pos - pos).magnitude_squared(), e
 
         # Future optimization: use circle arithmetic to check if cell is in circle
+        # If top left of circle in radius + 1 wu cell?
+
         for y in range(ctly, cbry + 1):
             for x in range(ctlx, cbrx + 1):
                 self.cells[x][y].selected = True

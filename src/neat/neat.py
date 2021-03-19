@@ -50,7 +50,8 @@ class NEAT:
                 rand = Random()
                 for i in range(self.config.generation_size):
                     genotype_copy = self.config.base_genotype.copy()
-                    generate_perceptron_connections(genotype_copy, rand, chance_to_generate=0.8)
+                    generate_perceptron_connections(
+                        genotype_copy, rand, chance_to_generate=0.1)
                     self.population.add_member(genotype_copy)
 
         self.adjust_compatibility()
@@ -64,13 +65,13 @@ class NEAT:
 
         if self.config.fitness_function_type == 'population':
             self.config.fitness_function(self.population.population)
-        
+
         for genotype in self.population.population:
 
             if self.config.fitness_function_type == 'individual':
                 genotype.fitness = self.config.fitness_function(genotype)
 
-            genotype.adjusted_fitness =  genotype.fitness / genotype.species.count()
+            genotype.adjusted_fitness = genotype.fitness / genotype.species.count()
 
             self.population.total_fitness += genotype.fitness
             self.population.total_adjusted_fitness += genotype.adjusted_fitness
@@ -100,7 +101,7 @@ class NEAT:
         Args:
             genotype (Genotype): Genotype to place into species
         """
-        
+
         for genotype in self.population.population:
             for species_id, species in self.species.items():
                 assert species.prototype is not None
