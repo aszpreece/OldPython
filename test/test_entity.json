@@ -48,17 +48,23 @@
         {
             "class": "Ear",
             "data": {
+                "name": "left_ear",
                 "angle": -90,
                 "fov": 85,
-                "name": "left_ear"
+                "min_freq": 1,
+                "max_freq": 5,
+                "freq_buckets": 5
             }
         },
         {
             "class": "Ear",
             "data": {
+                "name": "right_ear",
                 "angle": 90,
                 "fov": 85,
-                "name": "right_ear"
+                "min_freq": 1,
+                "max_freq": 5,
+                "freq_buckets": 5
             }
         },
         {
@@ -89,9 +95,8 @@
             "class": "Speaker",
             "data": {
                 "name": "sound_source",
-                "max_range": 15,
-                "max_amplitude": 10,
-                "frequency": 100
+                "max_freq": 1,
+                "max_amplitude": 25
             }
         },
         {
@@ -108,12 +113,16 @@
                         "from": "right_eye.activation"
                     },
                     {
+                        "type": "array",
+                        "size": 1,
                         "name": "left_ear",
-                        "from": "left_ear.activation"
+                        "from": "left_ear.activations"
                     },
                     {
+                        "type": "array",
+                        "size": 1,
                         "name": "right_ear",
-                        "from": "right_ear.activation"
+                        "from": "right_ear.activations"
                     }
                 ],
                 "outputs": [
@@ -128,8 +137,13 @@
                         "function": "sigmoid"
                     },
                     {
-                        "name": "sound_output",
-                        "to": "sound_source.activation",
+                        "name": "sound_output_amp",
+                        "to": "sound_source.amplitude",
+                        "function": "relu_sig"
+                    },
+                    {
+                        "name": "sound_output_freq",
+                        "to": "sound_source.frequency",
                         "function": "relu_sig"
                     }
                 ]

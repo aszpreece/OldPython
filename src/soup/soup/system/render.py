@@ -1,3 +1,4 @@
+from src.soup.soup.system.sound_system import calculate_speaker_range
 from src.soup.soup.components.ear import Ear
 import pygame
 import pygame.gfxdraw
@@ -15,6 +16,9 @@ def sigmoid(x):
 
 
 def draw_circle_alpha(surface, color, center, radius):
+    pygame.draw.circle(surface, color, center, radius)
+
+    return
     target_rect = pygame.Rect(center, (0, 0)).inflate((radius * 2, radius * 2))
     shape_surf = pygame.Surface(target_rect.size, pygame.SRCALPHA)
     pygame.draw.circle(shape_surf, color, (radius, radius), radius)
@@ -34,16 +38,22 @@ class Render(src.soup.engine.system.System):
         offset = camera._pos
 
         self.screen.fill((100, 255, 255))
+
+        for entity in self.ecs.filter(Speaker.c_type_id):
+            draw_pos = (entity._pos - offset) * cm_comp.zoom
+
+            for speaker in entity.get_components(Speaker.c_type_id):
+                speaker_range = calculate_speaker_range(
+                    0.1, speaker.frequency * speaker.max_freq, speaker.amplitude * speaker.max_amplitude)
+                draw_circle_alpha(self.screen, pygame.Color(
+                    round(255 * speaker.frequency), 255, 0, round(100 - 100*speaker.amplitude)), draw_pos, speaker_range * cm_comp.zoom)
+
         # self.draw_grid(cm_comp.zoom)
-        for circle in self.ecs.cindex.get(Circle.c_type_id, []):
+        for circle in self.ecs.filter(Circle.c_type_id):
 
             [circle_component] = circle.get_components(Circle.c_type_id)
 
             draw_pos = (circle._pos - offset) * cm_comp.zoom
-
-            for speaker in circle.get_components(Speaker.c_type_id):
-                draw_circle_alpha(self.screen, pygame.Color(
-                    255, 255, 0, round(100 - 100*speaker.activation)), draw_pos, speaker.max_range * cm_comp.zoom)
 
             pygame.draw.circle(self.screen, circle_component.colour,
                                draw_pos, circle_component.radius * cm_comp.zoom)
@@ -71,8 +81,9 @@ class Render(src.soup.engine.system.System):
                 rect_top_left = draw_pos - dimensions
                 rect = pygame.Rect(rect_top_left, dimensions * 2)
 
-                if ear.activation > 0:
-                    colour = ((sigmoid(ear.activation)) * 255, 0, 0)
+                activation = sum(ear.activations)
+                if activation > 0:
+                    colour = ((sigmoid(activation)) * 255, 0, 0)
                 else:
                     colour = (0, 0, 0)
 

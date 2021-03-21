@@ -22,12 +22,12 @@ class Component:
         if not required_set.issubset(arg_dict.keys()):
             missing_keys = required_set - arg_dict.keys()
             raise ValueError(
-                f'Component dictionary definition is missing the following required keys: {missing_keys}')
+                f'Component dictionary definition for {self.__class__} is missing the following required keys: {missing_keys}')
         arg_dict_keys = set(arg_dict.keys())
         if not arg_dict_keys.issubset(required_set.union(allowed_set)):
             extra_keys = arg_dict_keys - (required_set.union(allowed_set))
             raise ValueError(
-                f'Component dictionary definition contains extra keys that are not defined in the defaults or required attributes: {extra_keys}')
+                f'Component dictionary definition for {self.__class__} contains extra keys that are not defined in the defaults or required attributes: {extra_keys}')
         self.__dict__.update(self.default_attr)
         self.__dict__.update(arg_dict)
 

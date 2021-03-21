@@ -176,8 +176,17 @@ class Genotype:
         self.node_name_map[name] = self.node_innov_start
 
     def from_dict(self, node_dict):
+        # atm: string -> int
+        # this array maps to these inputs
+        # how to mark string -> int as array?
+
         for input in node_dict['data']['inputs']:
-            self.add_input(input['name'])
+            if input.get('type', None) == 'array':
+                for i in range(input.get('size', 0)):
+                    self.add_input(input['name'] + f'__{i}')
+            else:
+                self.add_input(input['name'])
+
         for output in node_dict['data']['outputs']:
             self.add_output(
                 output['name'], activation_funcs[output['function']])

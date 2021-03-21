@@ -8,3 +8,4 @@ from src.soup.soup.system.render import *
 from src.soup.soup.system.velocity_system import *
 from src.soup.soup.system.brain_system import *
 from src.soup.soup.system.sound_system import *
+from src.soup.soup.system.sound_energy_system import *

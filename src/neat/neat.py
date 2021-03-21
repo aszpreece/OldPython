@@ -51,7 +51,7 @@ class NEAT:
                 for i in range(self.config.generation_size):
                     genotype_copy = self.config.base_genotype.copy()
                     generate_perceptron_connections(
-                        genotype_copy, rand, chance_to_generate=0.1)
+                        genotype_copy, rand, chance_to_generate=1)
                     self.population.add_member(genotype_copy)
 
         self.adjust_compatibility()

@@ -43,8 +43,10 @@ class EyeSystem(System):
                         # the max distance of
 
                         if dist_squared > 0:
-                            eye.activation += sigmoid(eye.power_multiplier *
-                                                      eye_range_sqrd/dist_squared)
+                            eye.activation += (eye.power_multiplier *
+                                               eye_range_sqrd/dist_squared)
+
+                eye.activation = math.tanh(eye.activation)
 
     def apply(self):
         pass

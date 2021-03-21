@@ -1,5 +1,6 @@
 
 from random import Random
+from src.soup.soup.system.stats.AverageDensitySystem import AverageDensitySystem
 from src.soup.soup.system.rigid_body_system import RigidBodySystem
 from src.soup.soup.system.food_system import FoodSystem
 from src.soup.soup.components.controllers.camera_controller import CameraController
@@ -17,7 +18,7 @@ from src.neat.phenotype import Phenotype
 from src.neat.reproduction import DefaultReproductionManager
 from src.soup.soup.components import Camera, Circle, Friction, Velocity
 from src.soup.soup.system import (FrictionSystem, MovementSystem, Render,
-                                  VelocitySystem, ControllerSystem, BrainSystem, SoundSystem)
+                                  VelocitySystem, ControllerSystem, BrainSystem, SoundSystem, SoundEnergySystem)
 
 from src.soup.soup.components.mouth import Mouth
 from src.soup.soup.system.eye_system import EyeSystem
@@ -30,6 +31,7 @@ if __name__ == '__main__':
     # Keep track of how much food was eaten per generation
     food_eaten_history = []
     critter_scores_history = []
+    average_denstiy_history = []
 
     entity_data = None
     with open('C:/_development/fyp/test/test_entity.json') as entity_json:
@@ -67,23 +69,30 @@ if __name__ == '__main__':
         manager.add_system(BrainSystem(manager))
         manager.add_system(ControllerSystem(manager))
         # manager.add_system(RigidBodySystem(manager))
-        manager.add_system(SoundSystem(manager))
+        manager.add_system(SoundSystem(manager, 0.1))
         manager.add_system(MovementSystem(manager))
         manager.add_system(VelocitySystem(manager))
         manager.add_system(FrictionSystem(manager))
         manager.add_system(EyeSystem(manager))
         manager.add_system(MouthSystem(manager))
         manager.add_system(FoodSystem(manager, food_count, 6))
+        manager.add_system(SoundEnergySystem(manager))
 
         time_delay = round(1000.0/60)
         time_delay = 0
+        simulation_ticks = 60 * 30
+
         screen = pg.display.set_mode((1000, 1000))
         pg.display.set_caption('Soup')
 
         manager.add_system(Render(manager, screen))
 
+        average_density_system = AverageDensitySystem(
+            manager, check_distance=10)
+        manager.add_system(average_density_system, simulation_ticks / 30)
+
         # 60 ticks per second, so to run for 30 seconds = 30 * 60
-        for i in range(30 * 60):
+        for i in range(simulation_ticks):
             pg.init()
             screen.fill((255, 255, 255))
             pg.event.pump()
@@ -105,6 +114,8 @@ if __name__ == '__main__':
 
         food_eaten_history.append(total_eaten)
         critter_scores_history.append(critter_scores)
+        average_denstiy_history.append(sum(
+            average_density_system.average_density_per_update) / len(average_density_system.average_density_per_update))
 
     base_genotype = Genotype()
     base_genotype.from_dict(
@@ -137,7 +148,7 @@ if __name__ == '__main__':
     )
 
     # plt.ion()
-    fig, axarr = plt.subplots(2, figsize=(6, 8))
+    fig, axarr = plt.subplots(3, figsize=(6, 8))
     plt.subplots_adjust(wspace=0.5, hspace=1)
     fig.show()
     fig.canvas.draw()
@@ -150,11 +161,14 @@ if __name__ == '__main__':
         axarr[0].plot(food_eaten_history)
 
         axarr[1].clear()
-        axarr[1].set(title=f"Score histogram generation: {neat.generation_num}",
-                     xlabel='Pellets Eaten', ylabel='Critters')
-        axarr[1].hist(critter_scores_history[neat.generation_num - 1], bins=20)
+        axarr[1].set(title=f"Average density",
+                     xlabel='Generation', ylabel='Average distance of other critters')
+        axarr[1].plot(average_denstiy_history)
 
-        pass
+        axarr[2].clear()
+        axarr[2].set(title=f"Score histogram generation: {neat.generation_num}",
+                     xlabel='Pellets Eaten', ylabel='Critters')
+        axarr[2].hist(critter_scores_history[neat.generation_num - 1], bins=20)
 
         fig.canvas.draw()
 
