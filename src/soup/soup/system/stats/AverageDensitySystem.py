@@ -4,6 +4,7 @@ import math
 
 
 class AverageDensitySystem(System):
+    parallel = False
 
     def __init__(self, ecs, check_distance):
         super().__init__(ecs)

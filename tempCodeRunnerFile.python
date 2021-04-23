@@ -1,0 +1,38 @@
+import pygame as pg
+import math
+
+def calculate_angle_diff(a1, a2):
+    diff_angle = a1 - a2
+    return (diff_angle + 180) % 360 - 180
+
+
+def angle_between_points(v1, v2):
+    diff = v1 - v2
+    return math.degrees(math.atan2(-diff.y, diff.x)) % 360
+
+around = [
+    pg.Vector2(1, 1),
+    pg.Vector2(2, 1),
+    pg.Vector2(1, 2),
+    pg.Vector2(1, 4),
+
+]
+
+rot = 45
+while(True):
+    rot+=5
+    range = 50
+
+    totcos = 0
+    totsin = 0
+    for a in around:
+        an = angle_between_points(pg.Vector2(0, 0), a)
+        diff = calculate_angle_diff(an, rot)
+        totcos += math.cos(diff)
+        totsin += math.sin(diff)
+
+    print('-------------------')
+    print(f'rot${rot}')
+    print(totcos)
+    print(totsin)
+    print('-------------------')

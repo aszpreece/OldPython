@@ -7,6 +7,7 @@ from src.soup.soup.components import Circle
 
 
 class FoodSystem(System):
+    parallel = False
 
     def __init__(self, ecs, target_food, empty_range_to_spawn):
         super().__init__(ecs)

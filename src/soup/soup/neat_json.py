@@ -1,4 +1,5 @@
 
+from os import cpu_count
 from random import Random
 from src.soup.soup.system.stats.AverageDensitySystem import AverageDensitySystem
 from src.soup.soup.system.rigid_body_system import RigidBodySystem
@@ -43,7 +44,8 @@ if __name__ == '__main__':
         wu_per_cell = 5
         food_count = round(len(genotypes) * 1.5)
 
-        manager = ecs.ECS(world_width, world_height, wu_per_cell)
+        manager = ecs.ECS(world_width, world_height,
+                          wu_per_cell, cores_to_use=1)
         manager.add_entity(pos=pg.Vector2(0, 0)) \
             .attach(Camera({})) \
             .attach(CameraController({'camera_acceleration': 0.1})) \
@@ -79,7 +81,7 @@ if __name__ == '__main__':
         manager.add_system(SoundEnergySystem(manager))
 
         time_delay = round(1000.0/60)
-        time_delay = 0
+        # time_delay = 0
         simulation_ticks = 60 * 30
 
         screen = pg.display.set_mode((1000, 1000))
@@ -98,7 +100,7 @@ if __name__ == '__main__':
             pg.event.pump()
             manager.update()
             pg.display.flip()
-            # pg.time.delay(time_delay)  # 1 second == 1000 milliseconds
+            pg.time.delay(time_delay)  # 1 second == 1000 milliseconds
 
         pg.display.quit()
         pg.quit()

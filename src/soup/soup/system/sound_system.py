@@ -35,6 +35,7 @@ def calculate_energy_usage(frequency, amplitude):
 
 
 class SoundSystem(System):
+    parallel = False
 
     def __init__(self, ecs, interference_thresh=0.05):
         super().__init__(ecs)

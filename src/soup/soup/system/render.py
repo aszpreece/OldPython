@@ -27,6 +27,8 @@ def draw_circle_alpha(surface, color, center, radius):
 
 class Render(src.soup.engine.system.System):
 
+    parallel = False
+
     def __init__(self, ecs, screen):
         super().__init__(ecs)
         self.screen = screen

@@ -6,17 +6,21 @@ from src.soup.engine.system import System
 
 
 class SoundEnergySystem(System):
+    parallel = True
 
     def __init__(self, ecs):
         super().__init__(ecs)
 
-    def update(self):
+    def get_work_data(self):
         sound_entities = set(
             self.ecs.filter(Speaker.c_type_id))
         mouth_entities = set(
-
             self.ecs.filter(Mouth.c_type_id))
-        for entity in sound_entities & mouth_entities:
+        return sound_entities & mouth_entities
+
+    def update(self):
+
+        def sound_energy_system(entity):
             mouth = entity.get_component_by_name('mouth')
             for speaker in entity.get_components(Speaker.c_type_id):
                 real_freq = speaker.frequency * speaker.max_freq
@@ -26,6 +30,7 @@ class SoundEnergySystem(System):
 
                 mouth.eaten_count -= energy_used
                 mouth.eaten_count = 0 if mouth.eaten_count < 0 else mouth.eaten_count
+        return sound_energy_system
 
     def apply(self):
         pass

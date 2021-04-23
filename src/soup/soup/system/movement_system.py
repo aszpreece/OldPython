@@ -7,15 +7,19 @@ import math
 
 
 class MovementSystem(System):
+    parallel = True
 
     def __init__(self, ecs, bounce_edges=True):
         super().__init__(ecs)
         self.bounce_edges = bounce_edges
 
-    def update(self):
+    def get_work_data(self):
         movement = set(self.ecs.filter(Movement.c_type_id))
         velocities = set(self.ecs.filter(Velocity.c_type_id))
-        for entity in movement & velocities:
+        return movement & velocities
+
+    def update(self):
+        def update_movement(entity):
             vel = entity.get_component_by_name('velocity')
             mov = entity.get_component_by_name('movement')
             if math.isnan(vel.vel.x) or math.isnan(vel.vel.y):
@@ -28,6 +32,7 @@ class MovementSystem(System):
 
             if math.isnan(vel.vel.x) or math.isnan(vel.vel.y):
                 print('foo')
+        return update_movement
 
     def apply(self):
         pass

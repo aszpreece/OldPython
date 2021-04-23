@@ -9,15 +9,18 @@ from random import Random
 
 
 class EyeSystem(System):
+    parallel = True
 
     def __init__(self, ecs):
         super().__init__(ecs)
         self.rand = Random()
 
-    def update(self):
-        eyes_entities = set(self.ecs.cindex.get(Eye.c_type_id, []))
+    def get_work_data(self):
+        return set(self.ecs.filter(Eye.c_type_id))
 
-        for entity in eyes_entities:
+    def work(self):
+
+        def update_eyes(entity):
             eyes = entity.get_components(Eye.c_type_id)
             for eye in eyes:
                 eye_world_angle = (entity._rot + eye.angle) % 360
@@ -47,6 +50,7 @@ class EyeSystem(System):
                                                eye_range_sqrd/dist_squared)
 
                 eye.activation = math.tanh(eye.activation)
+        return update_eyes
 
     def apply(self):
         pass

@@ -7,17 +7,25 @@ from src.soup.soup.components.controller import Controller
 
 
 class ControllerSystem(System):
+    parallel = True
 
     def __init__(self, ecs):
         super().__init__(ecs)
 
-    def update(self):
+    def get_work_data(self):
         controller_entities = set(
             self.ecs.cindex.get(Controller.c_type_id, []))
-        for entity in controller_entities:
+        return controller_entities
+
+    def work(self):
+        pass
+
+    def work(self):
+        def update_controllers(entity):
             controllers = entity.get_components(Controller.c_type_id)
             for controller in controllers:
                 controller.update(entity)
+        return update_controllers
 
     def apply(self):
         pass

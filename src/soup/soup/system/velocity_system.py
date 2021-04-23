@@ -4,13 +4,17 @@ import math
 
 
 class VelocitySystem(System):
+    parallel = True
 
     def __init__(self, ecs, bounce_edges=True):
         super().__init__(ecs)
         self.bounce_edges = bounce_edges
 
-    def update(self):
-        for vs in self.ecs.cindex.get(Velocity.c_type_id, []):
+    def get_work_data(self):
+        return self.ecs.filter(Velocity.c_type_id)
+
+    def work(self):
+        def update_velocities(vs):
             old_pos = vs._pos
             old_rot = vs._rot
 
@@ -33,6 +37,7 @@ class VelocitySystem(System):
                 if vel.new_pos.y > self.ecs.world_height:
                     vel.new_pos.y = self.ecs.world_height
                     vel.vel.y = -vel.vel.y
+        return update_velocities
 
     def apply(self):
         for vs in self.ecs.cindex.get(Velocity.c_type_id, []):

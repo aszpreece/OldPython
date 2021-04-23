@@ -6,17 +6,23 @@ import math
 
 
 class RigidBodySystem(System):
+    parallel = True
 
     def __init__(self, ecs):
         super().__init__(ecs)
 
-    def update(self):
+    def get_work_data(self):
         rigid_bodies = set(self.ecs.filter(RigidBody.c_type_id))
         velocities = set(self.ecs.filter(Velocity.c_type_id))
-        largest_rb = max(map(lambda rb: rb.get_component_by_name(
-            'rigidbody').radius, rigid_bodies))
+        return rigid_bodies & velocities
 
-        for entity in rigid_bodies & velocities:
+    def update(self):
+        # TODO get this back in
+        # largest_rb = max(map(lambda rb: rb.get_component_by_name(
+        #     'rigidbody').radius, rigid_bodies))
+        largest_rb = 0
+
+        def update_rigid_bodies(entity):
             # vel = entity.get_component_by_name('velocity')
             rb = entity.get_component_by_name('rigidbody')
             potential_interset = entity.get_nearby_entities(
@@ -36,6 +42,7 @@ class RigidBodySystem(System):
                         vel.vel -= vec.normalize() * 0.01
                         if math.isnan(vel.vel.x) or math.isnan(vel.vel.y):
                             print('foo')
+        return update_rigid_bodies
 
     def apply(self):
         pass

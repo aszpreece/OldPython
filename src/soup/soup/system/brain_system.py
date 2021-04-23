@@ -1,39 +1,37 @@
+from os import cpu_count
 from src.soup.soup.components import Brain
 from src.soup.engine.system import System
-
-
-def update(self, entity):
-
-    eye_left = entity.get_component_by_name('eyeL').activation
-    eye_right = entity.get_component_by_name('eyeR').activation
-
-    self.brain.set('bias', 1)
-    self.brain.set('eyeL', eye_left)
-    self.brain.set('eyeR', eye_right)
-
-    self.brain.calculate()
-
-    v = self.brain.get('v_accel')
-    r = self.brain.get('r_accel')
+import multiprocessing as mp
 
 
 class BrainSystem(System):
+    parallel = True
 
     def __init__(self, ecs):
         super().__init__(ecs)
 
-    def update(self):
-        brain_entities = set(
+    def get_work_data(self):
+        return set(
             self.ecs.filter(Brain.c_type_id))
-        for entity in brain_entities:
+
+    def work(self):
+        def update_brain(entity):
             brain = entity.get_component_by_name('brain')
             for mapping in brain.inputs:
-                brain.brain.set(mapping['name'],
-                                entity.get_value(mapping['from']))
+                if mapping.get('type', None) == 'array':
+                    arr = entity.get_value(mapping['from'])
+                    for i in range(mapping.get('size', 0)):
+                        brain.brain.set(mapping['name'] + f'__{i}', arr[i])
+                else:
+                    brain.brain.set(mapping['name'],
+                                    entity.get_value(mapping['from']))
+
             brain.brain.calculate()
             for mapping in brain.outputs:
                 entity.set_value(
                     mapping['to'], brain.brain.get(mapping['name']))
 
+        return update_brain
+
     def apply(self):
-        pass
+        return None
